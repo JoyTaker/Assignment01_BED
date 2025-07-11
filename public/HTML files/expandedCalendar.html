@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calender list</title>
+    <link rel="stylesheet" href="../CSS files/expandedCalendar.css">
+
+    <!-- Font imports -->
+
+</head>
+
+<body>
+    
+    <div class="container">
+        <header>
+            <div class="company-name-logo">
+                <img src="../Images/logo.png" alt="Company Logo" class="logo">
+                <h1>Moke Medical</h1>
+            </div>
+
+        </header>
+
+        <main>
+            <form class="main-container">
+                <div class="date-input">
+                    <label for="date">Select a date:</label>
+                    <input type="date" id="date" name="date">
+                </div>
+
+                <div class="time-range">
+                    <span>Time range:</span>
+                    <div class="time-picker">
+                        <button type="button" onclick="increaseStart()">▲</button>
+                        <span id="start-time">9am</span>
+                        <button type="button" onclick="decreaseStart()">▼</button>
+                    </div>
+                <span>to</span>
+                <div class="time-picker">
+                    <button type="button" onclick="increaseEnd()">▲</button>
+                    <span id="end-time">9pm</span>
+                    <button type="button" onclick="decreaseEnd()">▼</button>
+                </div>
+                </div>
+
+                <div class="schedule">
+                    <div class="select-all">
+                        <input type="checkbox" id="selectAll" onclick="toggleAll()">
+                        <label for="selectAll">Select all</label>
+                    </div>
+                </div>
+
+                <div class="alert-ringtone">
+                    <div>Alert ringtone</div>
+                    <button>Add</button>
+                </div>
+
+                <button type="button" class="notification" id="notification-page"> Notification customization</button>
+
+                <button class="mute">Mute selected</button>
+
+                <div class="navbar">
+                    <button class="home"><a href="../HTML files/home.html">Home</a></button>
+                    <button class="calendar"><a href="../HTML files/calendar.html">Calendar</a></button>
+                    <button class="Add-medication"><a href="../HTML files/Add-medication.html">Add Medication</a></button>
+                    <button class="settings"><a href="../HTML files/settings.html">Settings</a></button>
+                </div>
+            </form>
+        </main>
+    </div>
+</body>
+
+<script src=../JSFiles/expandedCalendar.js></script>
+</html>

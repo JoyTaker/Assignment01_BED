@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Customization</title>
+    <link rel="stylesheet" href="../CSS files/notificationCustomization.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="back-button-container">
+                <button type="button" id="back-button">
+                    <i class="fa fa-arrow-circle-o-left"></i>
+                </button>
+                <div>Back to calendar page</div>
+            </div>
+
+            <div class="company-name-logo">
+                <img src="../Images/logo.png" alt="Company Logo" class="logo" width="100">
+                <h1>Notification Customization</h1>
+            </div>
+            <hr style="border: 1px solid black; margin: 0; padding: 0;">   
+        </header>
+
+        <main>
+            <form class="main-container">
+                <div class="date-selected" id="date-selected">
+                    <div>Date Selected: </div>
+                    <div id="date-display"></div>
+                </div>
+
+
+            <div id="saved-notification-container"></div> 
+             <!-- <div class="saved-notification-container"> 
+                <button type="button" class="delete-notification-container">X</button>
+                <div class="layer1-container">
+                        <div id="medicine-name">Medicine name</div>
+                        <button type="button" id="edit-button" class="edit-button">Edit</button>
+                    </div>
+
+                    <hr style="width: 100%;height: 0; margin: 0; padding: 0;" >
+                    
+                    <div class="layer2-container">
+                        <button type="button" id="add-button" class="add-button">+</button>
+                    </div>
+                </div>   -->
+                
+                <!-- <div class="edit-box-container"> -->
+                    <!-- <div class="title">
+                        <button type="button" id="close-edit-window" onclick="closeEditWindow()">X</button>
+                        <h3>Edit Notification</h3>
+                    </div>
+                    <div class="edit-features" id="edit-features">
+                        <h3>To do item</h3>
+                        <input type="text" placeholder="To do item" id="to-do-item" class="general-info">
+
+                        <h3>Day on repeat</h3>
+                        <div class="day-on-repeat">
+                            <input type="text" placeholder="Every_hour" id="every-hour-item" class="general-info">
+                            <span class="arrow">→</span>
+                            <input type="text" placeholder="Duration" id="every-duration-item" class="general-info">
+                        </div>
+
+                        <h3>Hour range</h3>
+                        <div class="hour-range-container">
+                            <input type="time" id="first-hour-range" class="general-info">
+                            <span class="arrow">→</span>
+                            <input type="time" id="second-hour-range" class="general-info">
+                        </div>
+
+                        <h3>Repeat</h3>
+                        <div class="routine_option-and-schedule">
+                            <select class="general-info">
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                            <button type="submit" id="submit-edit-info">Submit</button>
+                        </div>
+                    </div> -->
+
+            </form>
+        </main> 
+        <script src="../JSFiles/notificationCustomization.js"></script>
+    </body>
+</html>
