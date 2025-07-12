@@ -53,7 +53,104 @@ async function fetchAndDisplayNotifications() {
 
 document.addEventListener("DOMContentLoaded", fetchAndDisplayNotifications);
 
+async function addMedicationContainer () {
+    document.getElementById('add-container-button').addEventListener('click', function(event) {
+        event.preventDefault();
 
+        let addBoxContainer = document.querySelector('.add-box-container');
+
+        if (!addBoxContainer) {
+            addBoxContainer = document.createElement("div");
+            addBoxContainer.className = 'add-box-container';
+            addBoxContainer.style.display = 'none';
+            addBoxContainer.innerHTML = `
+                <div class="title">
+                    <button type="button" id="close-add-window">X</button>
+                    <h3>Add Features</h3>
+                </div>
+                <div class="add-features" id="add-features">
+                    <h3>To do item</h3>
+                    <input type="text" placeholder="To do item" id="to-do-item" class="general-info">
+                    <h3>Day on repeat</h3>
+                    <div class="day-on-repeat">
+                        <input type="text" placeholder="Repeat a day count" id="repeat-times" class="general-info">
+                        <span class="arrow">→</span>
+                        <input type="text" placeholder="Duration" id="duration-of-reminder" class="general-info">
+                    </div>
+                    <h3>Hour range</h3>
+                    <div class="hour-range-container">
+                        <input type="time" id="first-hour-range" class="general-info">
+                        <span class="arrow">→</span>
+                        <input type="time" id="second-hour-range" class="general-info">
+                    </div>
+                    <h3>Repeat</h3>
+                    <div class="routine_option-and-schedule">
+                        <select class="general-info" id="repeat-select">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                        <button type="submit" id="submit-add-info">Submit</button>
+                    </div>
+                </div>
+            `;
+            const mainContainer = document.querySelector('.main-container');
+            mainContainer.appendChild(addBoxContainer);
+
+            addBoxContainer.querySelector('#close-add-window').addEventListener('click', () => {
+                addBoxContainer.style.display = 'none';
+            });
+
+            addBoxContainer.querySelector('#submit-add-info').addEventListener('click', async function(event) {
+                event.preventDefault();
+
+                const item = document.getElementById("to-do-item").value;
+                const day_on_repeat = document.getElementById("repeat-times");
+                const duration_of_reminder = document.getElementById("duration-of-reminder");
+                const startHour = parseInt(document.getElementById('first-hour-range').value.split(":")[0]);
+                const endHour = parseInt(document.getElementById('second-hour-range').value.split(":")[0]);
+                const repeatSelect = parseInt(document.getElementById('repeat-select').value);
+                
+                const medicationData = {
+                    name: item,
+                    repeat_times: day_on_repeat, // int
+                    repeat_duration: duration_of_reminder, // int
+                    start_hour: startHour, // int
+                    end_hour: endHour, // int
+                    frequency_type: repeatSelect, // var-char
+                    schedule_date: savedDate // date
+                };
+
+            try {
+                const response = await fetch('http://localhost:3000/medications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(medicationData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                alert("Medication added!");
+                addBoxContainer.style.display = 'none';
+                appendMedicationContainer(); // Refresh list
+                } else {
+                alert(result.message || "Failed to add medication.");
+                }
+            } catch (err) {
+                console.error("Error adding medication:", err);
+                alert("Server error. Could not add medication.");
+            }
+            });
+
+        }
+        addBoxContainer.style.display = (addBoxContainer.style.display === 'none') ? 'flex' : 'none';
+        console.log("Final medicationData before insert:", medicationData);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', addMedicationContainer);
 
 // Add container based on notifications
 async function appendMedicationContainer() {
@@ -165,6 +262,7 @@ async function appendMedicationContainer() {
                 }
             });
 
+
             // Edit Box
             const editBoxContainer = document.createElement("div");
             editBoxContainer.className = 'edit-box-container';
@@ -181,7 +279,7 @@ async function appendMedicationContainer() {
                     <div class="day-on-repeat">
                         <input type="text" placeholder="Every_hour" class="general-info every-hour-item">
                         <span class="arrow">→</span>
-                        <input type="text" placeholder="Duration" class="general-info every-duration-item">
+                        <input type="text" placeholder="Duration" class="general-info frequency-item">
                     </div>
                     <h3>Hour range</h3>
                     <div class="hour-range-container">
@@ -191,7 +289,7 @@ async function appendMedicationContainer() {
                     </div>
                     <h3>Repeat</h3>
                     <div class="routine_option-and-schedule">
-                        <select class="general-info routine-select">
+                        <select class="general-info" id="general-info">
                             <option value="daily">Daily</option>
                             <option value="weekly">Weekly</option>
                             <option value="monthly">Monthly</option>

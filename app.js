@@ -9,7 +9,8 @@ const {
     getFilteredMedications,
     getMedicationById,
     getAllMedicationByDate,
-    deleteMedicationById
+    deleteMedicationById,
+    addMedication
 } = require('./controllers/medicationController');
 
 const notificationController = require("./controllers/medicationNoteController");
@@ -26,6 +27,7 @@ app.get('/medications', getFilteredMedications);
 app.get('/medications/by-date', getAllMedicationByDate);
 app.get('/medications/:id', getMedicationById);
 app.delete('/medications/:id', deleteMedicationById);
+app.post('/medications', addMedication);
 
 // Medication notes routes
 app.post('/medication-notes', notificationController.createNote);

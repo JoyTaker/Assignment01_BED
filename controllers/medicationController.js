@@ -61,10 +61,65 @@ async function deleteMedicationById(req, res) {
   }
 }
 
+async function addMedication(req, res) {
+  const medicationData = req.body;
+
+  // Destructure for easier validation
+  const {
+    name,
+    schedule_date,
+    frequency_type,
+    repeat_times,
+    repeat_duration,
+    start_hour,
+    end_hour,
+    repeat_pattern
+  } = medicationData;
+
+  // Validate required fields
+  if (
+    !name ||
+    !schedule_date ||
+    !frequency_type ||
+    repeat_times === undefined ||  
+    start_hour === undefined ||
+    end_hour === undefined
+  ) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+medicationData.repeat_times = parseInt(repeat_times, 10);
+
+if (repeat_duration !== undefined && repeat_duration !== "") {
+  medicationData.repeat_duration = parseInt(repeat_duration, 10);
+} else {
+  medicationData.repeat_duration = 0; 
+}
+
+medicationData.start_hour = parseInt(start_hour, 10);
+medicationData.end_hour = parseInt(end_hour, 10);
+medicationData.repeat_pattern = repeat_pattern || 'Daily';
+
+  try {
+    const result = await medicationModel.addMedication(medicationData);
+
+    if (result.success) {
+      return res.status(201).json({ message: "Medication added successfully" });
+    } else {
+      return res.status(400).json({ message: result.message });
+    }
+  } catch (err) {
+    console.error("Error in addMedication controller:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+
 
 module.exports = {
   getFilteredMedications,
   getMedicationById,
   getAllMedicationByDate, 
-  deleteMedicationById
+  deleteMedicationById,
+  addMedication
 };
