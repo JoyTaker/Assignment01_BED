@@ -43,21 +43,35 @@ function decreaseEnd() {
 
 async function fetchMedications() {
   const date = document.getElementById("date").value;
-  if(!date) { return console.log("No date selected"); }
+  if (!date) {
+    console.log("⛔ No date selected in calendar input");
+    return;
+  }
+
+  console.log("📅 Selected date:", date);
+  console.log("🕘 Start index:", startTimeIndex, "End index:", endTimeIndex);
 
   try {
     const response = await fetch(`http://localhost:3000/medications?date=${date}&start=${startTimeIndex}&end=${endTimeIndex}`);
+    
     if (!response.ok) {
-      throw new Error('Network response was not ok in script.js');
+      throw new Error('❌ Network response was not ok in script.js');
     }
-    const medications = await response.json(); // JSON for medications
+
+    const medications = await response.json();
+
+    console.log("✅ Medications fetched from server:", medications); // 🔍 Add this line
+
     displayMedications(medications);
   } catch (error) { 
-    console.error("Error fetching medications:", error);
+    console.error("🚨 Error fetching medications:", error);
   }
 }
 
+
 function displayMedications(medications) {
+  console.log("📦 Displaying medications:", medications);
+
   const scheduleDiv = document.querySelector(".schedule");
 
   // Reset with the Select All section
@@ -68,14 +82,15 @@ function displayMedications(medications) {
     </div>
   `;
 
-  // Map from hour (int) → array of names
   const medicationMap = {};
+
   medications.forEach(med => {
-    if (!medicationMap[med.schedule_hour]) { // Check if there is 9am
-      medicationMap[med.schedule_hour] = []; 
+    if (!medicationMap[med.schedule_hour]) {
+      medicationMap[med.schedule_hour] = [];
     }
-    medicationMap[med.schedule_hour].push(med.name); // push name string into the time like 9am : Panadol
+    medicationMap[med.schedule_hour].push(med.name);
   });
+
 
   // Render all hours in selected range
 // Render all hours in selected range

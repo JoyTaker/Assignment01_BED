@@ -34,6 +34,8 @@ app.put('/medications/:id', updateMedication);
 // Medication notes routes
 app.post('/medication-notes', notificationController.createNote);
 app.get('/medication-notes', notificationController.retrieveNote);
+app.get('/medications/:id/notes/auto', notificationController.getAutoNoteFieldsController);
+
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);

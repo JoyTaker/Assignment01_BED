@@ -66,9 +66,6 @@ async function deleteMedicationById(req, res) {
 
 // Add medication
 async function addMedication(req, res) {
-  const medicationData = req.body;
-
-  // Destructure for easier validation
   const {
     name,
     schedule_date,
@@ -78,31 +75,49 @@ async function addMedication(req, res) {
     start_hour,
     end_hour,
     repeat_pattern
-  } = medicationData;
+  } = req.body;
 
-  // Validate required fields
-  if (
-    !name ||
-    !schedule_date ||
-    !frequency_type ||
-    repeat_times === undefined ||  
-    start_hour === undefined ||
-    end_hour === undefined
-  ) {
-    return res.status(400).json({ message: "Missing required fields" });
+  // Basic presence check
+  if (!name || !schedule_date || !frequency_type) {
+    return res.status(400).json({ message: "Missing required fields: name, date, or frequency_type" });
   }
 
-medicationData.repeat_times = parseInt(repeat_times, 10);
+  // Convert & validate repeat_times
+  const parsedRepeatTimes = Number(repeat_times);
+  if (!Number.isInteger(parsedRepeatTimes) || parsedRepeatTimes < 1) {
+    return res.status(400).json({ message: "repeat_times must be a positive whole number" });
+  }
 
-if (repeat_duration !== undefined && repeat_duration !== "") {
-  medicationData.repeat_duration = parseInt(repeat_duration, 10);
-} else {
-  medicationData.repeat_duration = 0; 
-}
+  // Convert & validate optional repeat_duration
+  let parsedRepeatDuration = 0;
+  if (repeat_duration !== undefined && repeat_duration !== "") {
+    parsedRepeatDuration = Number(repeat_duration);
+    if (!Number.isInteger(parsedRepeatDuration) || parsedRepeatDuration < 0) {
+      return res.status(400).json({ message: "repeat_duration must be a non-negative whole number" });
+    }
+  }
 
-medicationData.start_hour = parseInt(start_hour, 10);
-medicationData.end_hour = parseInt(end_hour, 10);
-medicationData.repeat_pattern = repeat_pattern || 'Daily';
+  // Convert & validate start_hour and end_hour
+  const parsedStartHour = Number(start_hour);
+  const parsedEndHour = Number(end_hour);
+  if (
+    !Number.isInteger(parsedStartHour) || parsedStartHour < 0 || parsedStartHour > 23 ||
+    !Number.isInteger(parsedEndHour) || parsedEndHour < 0 || parsedEndHour > 23
+  ) {
+    return res.status(400).json({ message: "Start and end hours must be whole numbers between 0 and 23" });
+  }
+
+  // Construct clean object for DB
+  const medicationData = {
+    name: name.trim(),
+    schedule_date,
+    frequency_type: frequency_type.trim(),
+    repeat_times: parsedRepeatTimes,
+    repeat_duration: parsedRepeatDuration,
+    start_hour: parsedStartHour,
+    end_hour: parsedEndHour,
+    repeat_pattern: repeat_pattern || 'Daily'
+  };
 
   try {
     const result = await medicationModel.addMedication(medicationData);

@@ -41,7 +41,24 @@ async function getNote(medication_id) {
     return result.recordset;
 }
 
+async function getAutoNoteFields(id) {
+    const pool = await sql.connect(dbConfig);
+    const result = await pool.request()
+        .input("id", sql.Int, id)
+        .query(`
+            SELECT *
+                FROM Medications
+                WHERE repeat_times IS NOT NULL
+                AND start_hour IS NOT NULL
+                AND end_hour IS NOT NULL
+                AND repeat_duration IS NOT NULL
+                AND id = @id;
+            `);
+        return result.recordset;
+}
+
 module.exports = {
     addNote, 
-    getNote
+    getNote,
+    getAutoNoteFields
 };

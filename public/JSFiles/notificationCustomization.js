@@ -53,6 +53,56 @@ async function fetchAndDisplayNotifications() {
 
 document.addEventListener("DOMContentLoaded", fetchAndDisplayNotifications);
 
+function validateMedicationInput(data) {
+    if (!data.name || data.name.trim() === "") {
+        alert("Name is required.");
+        return false;
+    }
+
+    if (
+        !Number.isFinite(data.repeat_times) ||
+        !Number.isInteger(data.repeat_times) ||
+        data.repeat_times < 1
+    ) {
+        alert("Repeat times must be a positive whole number.");
+        return false;
+    }
+
+    if (
+        !Number.isFinite(data.repeat_duration) ||
+        !Number.isInteger(data.repeat_duration) ||
+        data.repeat_duration < 1
+    ) {
+        alert("Duration must be a positive whole number.");
+        return false;
+    }
+
+    if (
+        !Number.isFinite(data.start_hour) ||
+        !Number.isInteger(data.start_hour) ||
+        data.start_hour < 0 || data.start_hour > 23
+    ) {
+        alert("Start hour must be a whole number between 0 and 23.");
+        return false;
+    }
+
+    if (
+        !Number.isFinite(data.end_hour) ||
+        !Number.isInteger(data.end_hour) ||
+        data.end_hour < 0 || data.end_hour > 23
+    ) {
+        alert("End hour must be a whole number between 0 and 23.");
+        return false;
+    }
+
+    if (!data.frequency_type || typeof data.frequency_type !== 'string') {
+        alert("Frequency type is required.");
+        return false;
+    }
+
+    return true;
+}
+
 async function addMedicationContainer () {
     document.getElementById('add-container-button').addEventListener('click', function(event) {
         event.preventDefault();
@@ -102,46 +152,64 @@ async function addMedicationContainer () {
                 addBoxContainer.style.display = 'none';
             });
 
-            addBoxContainer.querySelector('#submit-add-info').addEventListener('click', async function(event) {
+           addBoxContainer.querySelector('#submit-add-info').addEventListener('click', async function(event) {
                 event.preventDefault();
 
+                if (!savedDate) {
+                    alert("Please select a date first.");
+                    return;
+                }
+
                 const item = document.getElementById("to-do-item").value;
-                const day_on_repeat = parseInt(document.getElementById("repeat-times").value, 10);
-                const duration_of_reminder = parseInt(document.getElementById("duration-of-reminder").value, 10);
-                const startHour = parseInt(document.getElementById('first-hour-range').value.split(":")[0]);
-                const endHour = parseInt(document.getElementById('second-hour-range').value.split(":")[0]);
-                const repeatSelect = document.getElementById('repeat-select').value;
+                const repeatRaw = document.getElementById("repeat-times").value.trim();
+                const day_on_repeat = repeatRaw === "" ? NaN : Number(repeatRaw);
+
+                const durationRaw = document.getElementById("duration-of-reminder").value.trim();
+                const duration_of_reminder = durationRaw === "" ? NaN : Number(durationRaw);
+
                 
+                const startHourRaw = document.getElementById('first-hour-range').value;
+                const endHourRaw = document.getElementById('second-hour-range').value;
+
+                const startHour = startHourRaw ? parseInt(startHourRaw.split(":")[0], 10) : NaN;
+                const endHour = endHourRaw ? parseInt(endHourRaw.split(":")[0], 10) : NaN;
+
+                const repeatSelect = document.getElementById('repeat-select').value;
+
                 const medicationData = {
                     name: item,
-                    repeat_times: day_on_repeat, // int
-                    repeat_duration: duration_of_reminder, // int
-                    start_hour: startHour, // int
-                    end_hour: endHour, // int
-                    frequency_type: repeatSelect, // var-char
-                    schedule_date: savedDate // date
+                    repeat_times: day_on_repeat,
+                    repeat_duration: duration_of_reminder,
+                    start_hour: startHour,
+                    end_hour: endHour,
+                    frequency_type: repeatSelect,
+                    schedule_date: savedDate
                 };
 
-            try {
-                const response = await fetch('http://localhost:3000/medications', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(medicationData)
-                });
+                if (!validateMedicationInput(medicationData)) return;
 
-                const result = await response.json();
 
-                if (response.ok) {
+                try {
+                    const response = await fetch('http://localhost:3000/medications', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(medicationData)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
                     addBoxContainer.style.display = 'none';
                     ModifyMedicationContainer(); // Refresh list
-                } else {
-                alert(result.message || "Failed to add medication.");
+                    } else {
+                    alert(result.message || "Failed to add medication.");
+                    }
+                } catch (err) {
+                    console.error("Error adding medication:", err);
+                    alert("Server error. Could not add medication.");
                 }
-            } catch (err) {
-                console.error("Error adding medication:", err);
-                alert("Server error. Could not add medication.");
-            }
-            });
+                });
+
 
         }
         addBoxContainer.style.display = (addBoxContainer.style.display === 'none') ? 'flex' : 'none';
@@ -200,23 +268,21 @@ async function ModifyMedicationContainer() {
             addButton.className = 'add-button';
             addButton.textContent = '+';
 
-            layer2.appendChild(addButton);
+          try {
+            const noteRes = await fetch(`http://localhost:3000/medications/${med.id}/notes/auto`);
+            const notes = await noteRes.json(); // array of strings
 
-            // Load existing notes for this medication
-            try {
-                const noteRes = await fetch(`http://localhost:3000/medication-notes?medicationId=${med.id}`);
-                const notes = await noteRes.json();
-
-                notes.forEach(n => {
-                    const noteDiv = document.createElement('div');
-                    noteDiv.className = 'prompt-info';
-                    noteDiv.textContent = n.note_text;
-                    layer2.insertBefore(noteDiv, addButton);
-                });
-            } catch (err) {
-                console.error(`Failed to load notes for med ${med.id}`, err);
-            }
-
+            notes.forEach(noteText => {
+                const noteDiv = document.createElement('div');
+                noteDiv.className = 'prompt-info';
+                noteDiv.textContent = noteText;
+                layer2.appendChild(noteDiv); // Append notes first
+            });
+        } catch (err) {
+            console.error(`Failed to load notes for med ${med.id}`, err);
+        }
+        
+        layer2.appendChild(addButton); 
             // Add new note through + button
 
             addButton.addEventListener('click', () => {
@@ -262,7 +328,6 @@ async function ModifyMedicationContainer() {
                 }
             });
 
-
             // Edit Box
             const editBoxContainer = document.createElement("div");
             editBoxContainer.className = 'edit-box-container';
@@ -299,10 +364,6 @@ async function ModifyMedicationContainer() {
                     </div>
                 </div>
             `;
-
-            // Add object Container
-
-            // Edit object Container
 
             // Delete object Container
           deleteNotificationContainer.addEventListener("click", async function() {
@@ -380,6 +441,8 @@ async function ModifyMedicationContainer() {
         frequency_type: repeatSelect,
         schedule_date: savedDate
     };
+
+    if (!validateMedicationInput(medicationData)) return;
 
     try {
         const response = await fetch(`http://localhost:3000/medications/${med.id}`, {
