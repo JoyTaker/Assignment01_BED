@@ -10,7 +10,8 @@ const {
     getMedicationById,
     getAllMedicationByDate,
     deleteMedicationById,
-    addMedication
+    addMedication,
+    updateMedication
 } = require('./controllers/medicationController');
 
 const notificationController = require("./controllers/medicationNoteController");
@@ -28,6 +29,7 @@ app.get('/medications/by-date', getAllMedicationByDate);
 app.get('/medications/:id', getMedicationById);
 app.delete('/medications/:id', deleteMedicationById);
 app.post('/medications', addMedication);
+app.put('/medications/:id', updateMedication);
 
 // Medication notes routes
 app.post('/medication-notes', notificationController.createNote);

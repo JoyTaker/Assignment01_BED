@@ -46,8 +46,8 @@ async function fetchAndDisplayNotifications() {
             `;
         });  
         savedNotification.appendChild(createDiv);
-    } catch (error) {
-        console.error("Error fetching notifications:", error);
+    } catch (err) {
+        console.error("Error fetching notifications:", err);
     }
 }
 
@@ -106,11 +106,11 @@ async function addMedicationContainer () {
                 event.preventDefault();
 
                 const item = document.getElementById("to-do-item").value;
-                const day_on_repeat = document.getElementById("repeat-times");
-                const duration_of_reminder = document.getElementById("duration-of-reminder");
+                const day_on_repeat = parseInt(document.getElementById("repeat-times").value, 10);
+                const duration_of_reminder = parseInt(document.getElementById("duration-of-reminder").value, 10);
                 const startHour = parseInt(document.getElementById('first-hour-range').value.split(":")[0]);
                 const endHour = parseInt(document.getElementById('second-hour-range').value.split(":")[0]);
-                const repeatSelect = parseInt(document.getElementById('repeat-select').value);
+                const repeatSelect = document.getElementById('repeat-select').value;
                 
                 const medicationData = {
                     name: item,
@@ -132,9 +132,8 @@ async function addMedicationContainer () {
                 const result = await response.json();
 
                 if (response.ok) {
-                alert("Medication added!");
-                addBoxContainer.style.display = 'none';
-                appendMedicationContainer(); // Refresh list
+                    addBoxContainer.style.display = 'none';
+                    ModifyMedicationContainer(); // Refresh list
                 } else {
                 alert(result.message || "Failed to add medication.");
                 }
@@ -153,7 +152,7 @@ async function addMedicationContainer () {
 document.addEventListener('DOMContentLoaded', addMedicationContainer);
 
 // Add container based on notifications
-async function appendMedicationContainer() {
+async function ModifyMedicationContainer() {
     if (!savedDate) return;
 
     try {
@@ -218,7 +217,8 @@ async function appendMedicationContainer() {
                 console.error(`Failed to load notes for med ${med.id}`, err);
             }
 
-            // Add new note
+            // Add new note through + button
+
             addButton.addEventListener('click', () => {
                 let inputBox = layer2.querySelector('input.prompt-info');
                 if (!inputBox) {
@@ -274,26 +274,26 @@ async function appendMedicationContainer() {
                 </div>
                 <div class="edit-features">
                     <h3>To do item</h3>
-                    <input type="text" placeholder="To do item" class="general-info to-do-item">
+                    <input type="text" placeholder="To do item" id="to-do-items" class="general-info to-do-item" value="${med.name || ''}">
                     <h3>Day on repeat</h3>
                     <div class="day-on-repeat">
-                        <input type="text" placeholder="Every_hour" class="general-info every-hour-item">
+                        <input type="text" placeholder="Every_hour" id="repeat-times" class="general-info every-hour-item" value="${med.repeat_times || ''}">
                         <span class="arrow">→</span>
-                        <input type="text" placeholder="Duration" class="general-info frequency-item">
+                        <input type="text" placeholder="Duration" id="duration-of-reminder" class="general-info frequency-item" value="${med.repeat_duration || ''}">
                     </div>
                     <h3>Hour range</h3>
                     <div class="hour-range-container">
-                        <input type="time" class="general-info first-hour-range">
+                        <input type="time" class="general-info first-hour-range" id="startHour" value="${med.start_hour ? med.start_hour.toString().padStart(2, '0') + ':00' : ''}">
                         <span class="arrow">→</span>
-                        <input type="time" class="general-info second-hour-range">
+                        <input type="time" class="general-info second-hour-range" id="endHour" value="${med.end_hour ? med.end_hour.toString().padStart(2, '0') + ':00' : ''}">
                     </div>
                     <h3>Repeat</h3>
                     <div class="routine_option-and-schedule">
-                        <select class="general-info" id="general-info">
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
-                            <option value="yearly">Yearly</option>
+                        <select class="general-info" id="repeat-select">
+                            <option value="daily" ${med.frequency_type === 'daily' ? 'selected' : ''}>Daily</option>
+                            <option value="weekly" ${med.frequency_type === 'weekly' ? 'selected' : ''}>Weekly</option>
+                            <option value="monthly" ${med.frequency_type === 'monthly' ? 'selected' : ''}>Monthly</option>
+                            <option value="yearly" ${med.frequency_type === 'yearly' ? 'selected' : ''}>Yearly</option>
                         </select>
                         <button type="submit" class="submit-edit-info">Save</button>
                     </div>
@@ -357,13 +357,59 @@ async function appendMedicationContainer() {
                     container.style.display = 'flex';
                 });
             });
+
+            // Submit for edit container click 
+
+            editBoxContainer.querySelector('.submit-edit-info').addEventListener('click', async function(event) {
+    event.preventDefault();
+
+    // Use editBoxContainer.querySelector to get the correct input values
+    const item = editBoxContainer.querySelector('.to-do-item').value;
+    const day_on_repeat = parseInt(editBoxContainer.querySelector('.every-hour-item').value, 10);
+    const duration_of_reminder = parseInt(editBoxContainer.querySelector('.frequency-item').value, 10);
+    const startHour = parseInt(editBoxContainer.querySelector('.first-hour-range').value.split(":")[0]);
+    const endHour = parseInt(editBoxContainer.querySelector('.second-hour-range').value.split(":")[0]);
+    const repeatSelect = editBoxContainer.querySelector('select').value;
+
+    const medicationData = {
+        name: item,
+        repeat_times: day_on_repeat,
+        repeat_duration: duration_of_reminder,
+        start_hour: startHour,
+        end_hour: endHour,
+        frequency_type: repeatSelect,
+        schedule_date: savedDate
+    };
+
+    try {
+        const response = await fetch(`http://localhost:3000/medications/${med.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(medicationData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            editBoxContainer.style.display = 'none';
+            ModifyMedicationContainer(); // Refresh list
+            alert("Medication updated successfully!");
+        } else {
+            alert(result.message || "Failed to edit medication.");
         }
+    } catch (err) {
+        console.error("Error editing medication:", err);
+        alert("Server error. Could not edit medication.");
+    }
+});
+        }
+
     } catch (err) {
         console.error("Error loading medications:", err);
     }
 }
 
-document.addEventListener('DOMContentLoaded', appendMedicationContainer);
+document.addEventListener('DOMContentLoaded', ModifyMedicationContainer);
 
 // Post notes into the sql
 

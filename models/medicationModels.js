@@ -106,11 +106,51 @@ async function addMedication(medicationData) {
 }
 
 
+async function updateMedication(id, medicationData) {
+  const pool = await sql.connect(dbConfig);
+
+  try {
+    const result = await pool.request()
+      .input('id', sql.Int, id)
+      .input('name', sql.VarChar(255), medicationData.name)
+      .input('schedule_date', sql.Date, medicationData.schedule_date)
+      .input('frequency_type', sql.VarChar(50), medicationData.frequency_type)
+      .input('repeat_times', sql.Int, medicationData.repeat_times)
+      .input('repeat_duration', sql.Int, medicationData.repeat_duration)
+      .input('start_hour', sql.Int, medicationData.start_hour)
+      .input('end_hour', sql.Int, medicationData.end_hour)
+      .input('repeat_pattern', sql.VarChar(50), medicationData.repeat_pattern || 'Daily')
+      .query(`
+        UPDATE Medications SET
+          name = @name,
+          schedule_date = @schedule_date,
+          frequency_type = @frequency_type,
+          repeat_times = @repeat_times,
+          repeat_duration = @repeat_duration,
+          start_hour = @start_hour,
+          end_hour = @end_hour,
+          repeat_pattern = @repeat_pattern
+        WHERE id = @id
+      `);
+
+    if (result.rowsAffected[0] > 0) {
+      return { success: true };
+    } else {
+      return { success: false, message: "No medication updated" };
+    }
+  } catch (err) {
+    console.error("Error updating medication:", err);
+    return { success: false, message: "Error updating medication" };
+  }
+}
+
+
 
 module.exports = {
   getMedicationsByDateAndTime,
   getMedicationById,
   getAllMedicationsByDate, 
   deleteMedicationById,
-  addMedication
+  addMedication, 
+  updateMedication
 };

@@ -25,6 +25,8 @@ async function getAllMedicationByDate (req, res) {
     }
 }
 
+
+// Get medication by ID
 async function getMedicationById(req, res) {
   const { id } = req.params;
   try {
@@ -61,6 +63,8 @@ async function deleteMedicationById(req, res) {
   }
 }
 
+
+// Add medication
 async function addMedication(req, res) {
   const medicationData = req.body;
 
@@ -114,6 +118,60 @@ medicationData.repeat_pattern = repeat_pattern || 'Daily';
   }
 }
 
+// Update medication
+async function updateMedication(req, res) {
+  const medicationId = req.params.id;
+  const medicationData = req.body;
+
+  const {
+    name,
+    schedule_date,
+    frequency_type,
+    repeat_times,
+    repeat_duration,
+    start_hour,
+    end_hour,
+    repeat_pattern
+  } = medicationData;
+
+  // Validate required fields
+  if (
+    !name ||
+    !schedule_date ||
+    !frequency_type ||
+    repeat_times === undefined ||  
+    start_hour === undefined ||
+    end_hour === undefined
+  ) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+medicationData.repeat_times = parseInt(repeat_times, 10);
+
+if (repeat_duration !== undefined && repeat_duration !== "") {
+  medicationData.repeat_duration = parseInt(repeat_duration, 10);
+} else {
+  medicationData.repeat_duration = 0; 
+}
+
+medicationData.start_hour = parseInt(start_hour, 10);
+medicationData.end_hour = parseInt(end_hour, 10);
+medicationData.repeat_pattern = repeat_pattern || 'Daily';
+
+  try {
+    const result = await medicationModel.updateMedication(medicationId, medicationData);
+
+    if (result.success) {
+      return res.status(200).json({ message: "Medication updated successfully" });
+    } else {
+      return res.status(400).json({ message: result.message });
+    }
+  } catch (err) {
+    console.error("Error updating medication:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
 
 
 module.exports = {
@@ -121,5 +179,6 @@ module.exports = {
   getMedicationById,
   getAllMedicationByDate, 
   deleteMedicationById,
-  addMedication
+  addMedication,
+  updateMedication
 };
