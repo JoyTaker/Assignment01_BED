@@ -134,7 +134,7 @@ async function addMedication(req, res) {
 }
 
 // Update medication
-async function updateMedication(req, res) {
+async function updateMedicationController(req, res) {
   const medicationId = req.params.id;
   const medicationData = req.body;
 
@@ -195,5 +195,5 @@ module.exports = {
   getAllMedicationByDate, 
   deleteMedicationById,
   addMedication,
-  updateMedication
+  updateMedicationController
 };

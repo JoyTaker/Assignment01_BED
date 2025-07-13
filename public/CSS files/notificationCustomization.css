@@ -1,13 +1,30 @@
 
 
-
 .body {
     margin: 0;
     padding: 0;
     width: 100vw;
     height: 100vw;
+
 }
 
+/* Font imports */
+
+.jaro {
+  font-family: "Jaro", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
+
+.inter {
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+
+/* Main content */
 
 .container {
   max-width: 1440px;
@@ -23,6 +40,9 @@
     align-items: center;
     gap: 38vw;
     margin-top: 20px;
+    background-color: white;
+    border-radius: 10px;
+    
 } .back-button-container div {
     font-size: 25px;
 }
@@ -50,7 +70,7 @@
     justify-content: center;
     height: 80px;
     position: relative;
-    border: 1px solid red;
+    border-radius: 10px;
     margin-top: 5vh;
 }
 
@@ -59,6 +79,10 @@
     border: 1px solid black;
     position: absolute;
     left: 23vw;
+}
+
+.company-name-logo h1 {
+    color: black;
 }
 
 .main-container {
@@ -76,9 +100,14 @@
     border: 1px solid black;
     margin-top: 20px;
     width: 60vw;
-} .date-selected div {
-    font-size: 20px;
+    background-color: white;
+    border-radius: 5px;
+    padding: 5px 5px 5px 5px;
+}  #date-display, .date-display-title {
+    font-size: 25px;
     margin-right: 10px;
+} .date-display-title {
+    padding: 5px;
 }
 
 .saved-notification-container {
@@ -115,6 +144,7 @@
 
 .add-medication-container {
     text-align: center;
+    margin-top: 13px;
 } .add-medication-container h3 {
     padding: 2px;
     margin: 0;
@@ -122,7 +152,7 @@
 }
 
 #add-container-button {
-    background-color: rgb(0, 242, 255);
+    background-color: rgb(255, 140, 0);
     border: 1px solid black;
     width: 4vw;
     color: white;
@@ -199,22 +229,47 @@
 
 .edit-box-container {
     display: flex;
-    align-items: center;
+    align-items: start;
     width: 80vw;
     height: 15vw;
-    border: 1px solid black;
+    border: 3px solid orangered;
     border-radius: 20px;
     padding: 10px;
     margin-top: 20px;
     flex-direction: column;
     overflow-y: scroll;
+    background-color: orange;
+    color: white;
 } .edit-box-container .title {
     width: 100%;
     text-align: center;
+    display: flex;
+    justify-content: start;
+    align-items: center;
 } .edit-box-container h3 {
     margin: 0;
     font-size: 24px;
 }
+
+/* Custom WebKit scrollbar styles */
+.edit-box-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.edit-box-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.edit-box-container::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+}
+
+/* Optional: On hover, make scrollbar darker */
+.edit-box-container::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
 
 .edit-features {
     display: flex;
@@ -242,13 +297,14 @@
     align-items: center;
     justify-content: center;
     overflow-y: scroll;
-    background-color: white;
+    background-color: orange;
 } .add-box-container .title {
     width: 100%;
     text-align: center;
 } .add-box-container h3 {
     margin: 0;
     font-size: 24px;
+    color: white;
 }
 
 .add-features {
@@ -277,6 +333,14 @@
     border-radius: 10px;
     padding: 5px 5px 5px 5px;
     font-size: medium;
+    background-color: orange;
+    color: white;
+    font-size: 15px;
+    
+}.edit-button:hover {
+    cursor: pointer;
+    color: red;
+    transform: translateY(1px);
 }
 
 .title {

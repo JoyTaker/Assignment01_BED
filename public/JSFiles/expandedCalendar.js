@@ -44,33 +44,28 @@ function decreaseEnd() {
 async function fetchMedications() {
   const date = document.getElementById("date").value;
   if (!date) {
-    console.log("⛔ No date selected in calendar input");
+    console.log("No date selected in calendar input");
     return;
   }
-
-  console.log("📅 Selected date:", date);
-  console.log("🕘 Start index:", startTimeIndex, "End index:", endTimeIndex);
 
   try {
     const response = await fetch(`http://localhost:3000/medications?date=${date}&start=${startTimeIndex}&end=${endTimeIndex}`);
     
     if (!response.ok) {
-      throw new Error('❌ Network response was not ok in script.js');
+      throw new Error('Network response was not ok in script.js');
     }
 
     const medications = await response.json();
 
-    console.log("✅ Medications fetched from server:", medications); // 🔍 Add this line
-
-    displayMedications(medications);
+    displayMedications(medications); // if medication is fine calls display medication
   } catch (error) { 
-    console.error("🚨 Error fetching medications:", error);
+    console.error("Error fetching medications:", error);
   }
 }
 
 
 function displayMedications(medications) {
-  console.log("📦 Displaying medications:", medications);
+  console.log("Displaying medications:", medications);
 
   const scheduleDiv = document.querySelector(".schedule");
 
@@ -92,8 +87,6 @@ function displayMedications(medications) {
   });
 
 
-  // Render all hours in selected range
-// Render all hours in selected range
 for (let i = startTimeIndex; i <= endTimeIndex; i++) {
   const hourLabel = times[i];
   const medsAtHour = medicationMap[i]; // Array or undefined

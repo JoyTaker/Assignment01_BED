@@ -1,7 +1,23 @@
 
 .body
 {
+}
 
+/* Font import */
+
+.kumar-one-regular {
+  font-family: "Kumar One", serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* Inter */
+
+.inter {
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
 }
 
 /* CSS Header */
@@ -39,16 +55,50 @@
   row-gap: 20px;
 }
 
+.date-input {
+   display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: orange;
+  border: 2px solid grey;
+  width: 50vw;
+  padding: 5px 5px 5px 5px;
+  border-radius: 10px;
+
+}
+
+
+.select-date-text {
+  font-size: 20px;
+  color: white;
+}
+
+.date {
+  font-size: 20px;
+  background-color: rgb(250, 243, 229) ;
+}
 
 .time-range {
   display: flex;
   align-items: center;
   gap: 10px;
+  background-color: orange;
+  border: 2px solid grey;
+  width: 50vw;
+  padding: 5px 5px 5px 5px;
+  border-radius: 10px;
+} 
+
+.time-range-title {
+  color: white;
+  font-size: 20px;
 }
+
 .time-picker {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  column-gap: 10px;
 }
 .schedule {
   max-height: 200px;
@@ -60,6 +110,28 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.time-buttons {
+  display: flex;
+  flex-direction: column;
+  row-gap: 3px;
+}
+
+.start-time {
+  background-color: rgb(242, 242, 242);
+  width: 5vw;
+  text-align: center;
+  border: 1px solid black;
+  padding: 3px 3px 3px 3px;
+}
+
+.end-time {
+  background-color: rgb(242, 242, 242);
+  width: 5vw;
+  text-align: center;
+  border: 1px solid black;
+  padding: 3px 3px 3px 3px;
 }
 
 
@@ -97,6 +169,25 @@
 } .notification:hover {
   background-color: #e0e0e0;
   cursor: pointer;
+}
+
+.select-all {
+  background-color: grey;
+  color: white;
+  width: 10vw;
+  text-align: center;
+  align-content: center;
+  border: 1px solid black;
+}
+
+
+.select-all {
+  background-color: grey;
+  color: white;
+  width: 10vw;
+  text-align: center;
+  align-content: center;
+  border: 1px solid black;
 }
 
 .mute {
