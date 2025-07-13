@@ -180,29 +180,57 @@
 .layer2-container {
     display: flex;
     flex-direction: row;
-    width: inherit;     
+    width: 100%;     
     align-items: center;
-} 
+    border: 1px solid black;
+    height: 40px;
+    margin-bottom: 4px;
+    gap: 10px;
+}
+
+.button-wrapper {
+    display: flex;  
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border: none;
+    height: 100%;
+    flex: 1; /* take all space except for + button */
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #888 transparent;
+}
+
+/* Optional for WebKit-based browsers (Chrome/Safari) */
+.button-wrapper::-webkit-scrollbar {
+    height: 6px;
+}
+.button-wrapper::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+.button-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
 
 .prompt-info {
-    margin-left: 20px;
-    font-size: 20px;
-    color: black;
-    border: 1px solid black;
-    height: 85%;
-    width: 10vw;
-    border-radius: 20px;
-    text-align: center;
-    align-content: center;
+    margin-left: 10px;
+    font-size: 14px;
+    color: white;
     background-color: red;
-    font-size: medium;
-    color: white;
-    position: relative;
-    bottom: 2px;
-}.prompt-info::placeholder {
-    color: white;
-    font-size: large;
+    border-radius: 20px;
+    padding: 6px 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    height: fit-content;
+    text-align: center;
+    border: 1px solid black;
 }
+
+.prompt-info::placeholder {
+    color: white;
+}
+
 
 .add-button {
     background-color: orange;
@@ -251,24 +279,6 @@
     font-size: 24px;
 }
 
-/* Custom WebKit scrollbar styles */
-.edit-box-container::-webkit-scrollbar {
-    width: 8px;
-}
-
-.edit-box-container::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.edit-box-container::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.6);
-    border-radius: 20px;
-}
-
-/* Optional: On hover, make scrollbar darker */
-.edit-box-container::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(255, 255, 255, 0.9);
-}
 
 
 .edit-features {

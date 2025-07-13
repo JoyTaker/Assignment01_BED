@@ -74,7 +74,8 @@ async function addMedication(req, res) {
     repeat_duration,
     start_hour,
     end_hour,
-    repeat_pattern
+    repeat_pattern,
+    
   } = req.body;
 
   // Basic presence check
@@ -116,8 +117,11 @@ async function addMedication(req, res) {
     repeat_duration: parsedRepeatDuration,
     start_hour: parsedStartHour,
     end_hour: parsedEndHour,
+    schedule_hour: parsedStartHour,
     repeat_pattern: repeat_pattern || 'Daily'
   };
+
+  medicationData.schedule_hour = parsedStartHour;
 
   try {
     const result = await medicationModel.addMedication(medicationData);
@@ -172,6 +176,7 @@ if (repeat_duration !== undefined && repeat_duration !== "") {
 medicationData.start_hour = parseInt(start_hour, 10);
 medicationData.end_hour = parseInt(end_hour, 10);
 medicationData.repeat_pattern = repeat_pattern || 'Daily';
+medicationData.schedule_hour = parseInt(start_hour, 10);
 
   try {
     const result = await medicationModel.updateMedication(medicationId, medicationData);

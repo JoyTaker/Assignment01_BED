@@ -183,7 +183,8 @@ async function addMedicationContainer () {
                     start_hour: startHour,
                     end_hour: endHour,
                     frequency_type: repeatSelect,
-                    schedule_date: savedDate
+                    schedule_date: savedDate,
+                    schedule_hour: startHour
                 };
 
                 if (!validateMedicationInput(medicationData)) return;
@@ -261,7 +262,10 @@ async function ModifyMedicationContainer() {
 
             // Layer 2: Notes and Add Button
             const layer2 = document.createElement("div");
-            layer2.className = 'layer2-container';
+            layer2.className = 'layer2-container';  
+
+            const buttonWrapper = document.createElement("div");
+            buttonWrapper.className = 'button-wrapper';
 
             const addButton = document.createElement("button");
             addButton.type = 'button';
@@ -276,12 +280,13 @@ async function ModifyMedicationContainer() {
                 const noteDiv = document.createElement('div');
                 noteDiv.className = 'prompt-info';
                 noteDiv.textContent = noteText;
-                layer2.appendChild(noteDiv); // Append notes first
+                buttonWrapper.appendChild(noteDiv); // Append notes first
             });
         } catch (err) {
             console.error(`Failed to load notes for med ${med.id}`, err);
         }
         
+        layer2.appendChild(buttonWrapper);
         layer2.appendChild(addButton); 
             // Add new note through + button
 
@@ -290,7 +295,7 @@ async function ModifyMedicationContainer() {
                 if (!inputBox) {
                     inputBox = document.createElement("input");
                     inputBox.className = 'prompt-info';
-                    layer2.insertBefore(inputBox, addButton);
+                    buttonWrapper.appendChild(inputBox);
                     inputBox.focus();
 
                     let entered = false;
@@ -323,6 +328,7 @@ async function ModifyMedicationContainer() {
                             textBox.className = 'prompt-info';
                             textBox.textContent = value;
                             inputBox.replaceWith(textBox);
+                            buttonWrapper.appendChild(textBox);
                         }
                     });
                 }

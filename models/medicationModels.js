@@ -81,15 +81,16 @@ async function addMedication(medicationData) {
       .input('start_hour', sql.Int, medicationData.start_hour)
       .input('end_hour', sql.Int, medicationData.end_hour)
       .input('repeat_pattern', sql.VarChar(50), medicationData.repeat_pattern || 'Daily')
+      .input('schedule_hour', sql.Int, medicationData.schedule_hour)
       .input('is_deleted', sql.Bit, 0)
       .query(`
         INSERT INTO Medications (
           name, schedule_date, frequency_type, repeat_times,
-          repeat_duration, start_hour, end_hour, repeat_pattern, is_deleted
+          repeat_duration, start_hour, end_hour, repeat_pattern, is_deleted, schedule_hour
         )
         VALUES (
           @name, @schedule_date, @frequency_type, @repeat_times,
-          @repeat_duration, @start_hour, @end_hour, @repeat_pattern, @is_deleted
+          @repeat_duration, @start_hour, @end_hour, @repeat_pattern, @is_deleted, @schedule_hour
         )
       `);
 
