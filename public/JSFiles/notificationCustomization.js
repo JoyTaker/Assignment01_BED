@@ -130,7 +130,7 @@ async function addMedicationContainer () {
                     <input type="text" placeholder="To do item" id="to-do-item" class="general-info">
                     <h3>Day on repeat</h3>
                     <div class="day-on-repeat">
-                        <input type="text" placeholder="Every hour" id="repeat-times" class="general-info">
+                        <input type="text" placeholder="Duration (Every hour)" id="repeat-times" class="general-info">
                         <span class="arrow">→</span>
                         <input type="text" placeholder="Repeat reminder count" id="duration-of-reminder" class="general-info">
                     </div>
@@ -398,7 +398,7 @@ async function ModifyMedicationContainer() {
                     <input type="text" placeholder="To do item" id="to-do-items" class="general-info to-do-item" value="${med.name || ''}">
                     <h3>Day on repeat</h3>
                     <div class="day-on-repeat">
-                        <input type="text" placeholder="Every hour" id="repeat-times" class="general-info every-hour-item" value="${med.repeat_times || ''}">
+                        <input type="text" placeholder="Duration (Every hour)" id="repeat-times" class="general-info every-hour-item" value="${med.repeat_times || ''}">
                         <span class="arrow">→</span>
                         <input type="text" placeholder="Repeat reminder count" id="duration-of-reminder" class="general-info frequency-item" value="${med.repeat_duration || ''}">
                     </div>

@@ -4,9 +4,12 @@ const dbConfig = require('../dbConfig');
 
 
 function toSqlTime(timeStr) {
-  const [h, m] = timeStr.split(':');
-  return `${h.padStart(2, '0')}:${m.padStart(2, '0')}:00`;
+  const [h, m] = timeStr.split(':').map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0); // hours, minutes, seconds, milliseconds
+  return d;
 }
+
 
 
 async function getMedicationsByDateAndTime(date) {
