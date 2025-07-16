@@ -17,6 +17,19 @@ function displayDate() {
     dateContainer.appendChild(dateDiv);
 }
 
+function formatTime(time) {
+  if (!time) return '';
+  if (typeof time === 'string' && /^\d{2}:\d{2}/.test(time)) {
+    return time.slice(0, 5);
+  }
+  const date = new Date(time);
+  if (isNaN(date)) return ''; 
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
+
 async function fetchAndDisplayNotifications() {
     if (!savedDate) {
         return;
@@ -52,7 +65,6 @@ async function fetchAndDisplayNotifications() {
 }
 
 document.addEventListener("DOMContentLoaded", fetchAndDisplayNotifications);
-
 function validateMedicationInput(data) {
     if (!data.name || data.name.trim() === "") {
         alert("Name is required.");
@@ -77,21 +89,15 @@ function validateMedicationInput(data) {
         return false;
     }
 
-    if (
-        !Number.isFinite(data.start_hour) ||
-        !Number.isInteger(data.start_hour) ||
-        data.start_hour < 0 || data.start_hour > 23
-    ) {
-        alert("Start hour must be a whole number between 0 and 23.");
+    const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+    if (!timeRegex.test(data.start_hour)) {
+        alert("Start hour must be in HH:mm format (e.g., 09:00).");
         return false;
     }
 
-    if (
-        !Number.isFinite(data.end_hour) ||
-        !Number.isInteger(data.end_hour) ||
-        data.end_hour < 0 || data.end_hour > 23
-    ) {
-        alert("End hour must be a whole number between 0 and 23.");
+    if (!timeRegex.test(data.end_hour)) {
+        alert("End hour must be in HH:mm format (e.g., 17:30).");
         return false;
     }
 
@@ -102,6 +108,7 @@ function validateMedicationInput(data) {
 
     return true;
 }
+
 
 async function addMedicationContainer () {
     document.getElementById('add-container-button').addEventListener('click', function(event) {
@@ -123,9 +130,9 @@ async function addMedicationContainer () {
                     <input type="text" placeholder="To do item" id="to-do-item" class="general-info">
                     <h3>Day on repeat</h3>
                     <div class="day-on-repeat">
-                        <input type="text" placeholder="Repeat a day count" id="repeat-times" class="general-info">
+                        <input type="text" placeholder="Every hour" id="repeat-times" class="general-info">
                         <span class="arrow">→</span>
-                        <input type="text" placeholder="Duration" id="duration-of-reminder" class="general-info">
+                        <input type="text" placeholder="Repeat reminder count" id="duration-of-reminder" class="general-info">
                     </div>
                     <h3>Hour range</h3>
                     <div class="hour-range-container">
@@ -167,14 +174,12 @@ async function addMedicationContainer () {
                 const durationRaw = document.getElementById("duration-of-reminder").value.trim();
                 const duration_of_reminder = durationRaw === "" ? NaN : Number(durationRaw);
 
-                
-                const startHourRaw = document.getElementById('first-hour-range').value;
-                const endHourRaw = document.getElementById('second-hour-range').value;
-
-                const startHour = startHourRaw ? parseInt(startHourRaw.split(":")[0], 10) : NaN;
-                const endHour = endHourRaw ? parseInt(endHourRaw.split(":")[0], 10) : NaN;
+                const startHour = document.getElementById('first-hour-range').value;
+                const endHour = document.getElementById('second-hour-range').value;
 
                 const repeatSelect = document.getElementById('repeat-select').value;
+
+                const scheduleHour = parseInt(startHour.split(':')[0], 10);
 
                 const medicationData = {
                     name: item,
@@ -184,7 +189,7 @@ async function addMedicationContainer () {
                     end_hour: endHour,
                     frequency_type: repeatSelect,
                     schedule_date: savedDate,
-                    schedule_hour: startHour
+                    schedule_hour: scheduleHour
                 };
 
                 if (!validateMedicationInput(medicationData)) return;
@@ -214,11 +219,24 @@ async function addMedicationContainer () {
 
         }
         addBoxContainer.style.display = (addBoxContainer.style.display === 'none') ? 'flex' : 'none';
-        console.log("Final medicationData before insert:", medicationData);
     });
 }
 
 document.addEventListener('DOMContentLoaded', addMedicationContainer);
+
+
+function validateDurationAndRepeat (duration, repeat, startHour, endHour) {
+    const timestamp1 = startHour.getTime();
+    const timestamp2 = endHour.getTime();
+
+    if (timestamp1 - timestamp2 < duration * repeat) {
+        prompt(`Duration and repeat is too much`);
+        return;
+    }
+    
+}   
+
+
 
 // Add container based on notifications
 async function ModifyMedicationContainer() {
@@ -272,14 +290,46 @@ async function ModifyMedicationContainer() {
             addButton.className = 'add-button';
             addButton.textContent = '+';
 
+         // Retrieve text data for the notes
           try {
             const noteRes = await fetch(`http://localhost:3000/medications/${med.id}/notes/auto`);
-            const notes = await noteRes.json(); // array of strings
-
+            const notes = await noteRes.json();
+            
+            
             notes.forEach(noteText => {
+                
+                
+             let modifiedText = noteText;
+
+            if (typeof noteText !== 'string') {
+                console.warn('Skipping non-string note:', noteText);
+                return;
+            }
+
+            if (noteText.startsWith("Start Hour:")) {
+                const raw = noteText.split("Start Hour:")[1].trim();
+                const dateObj = new Date(raw);
+                const hours = dateObj.getHours();
+                const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+                const suffix = hours >= 12 ? 'PM' : 'AM';
+                const hour12 = ((hours + 11) % 12 + 1).toString().padStart(2, '0');
+                modifiedText = `Start Hour: ${hour12}:${minutes} ${suffix}`;
+            }
+
+            if (noteText.startsWith("End Hour:")) {
+                const raw = noteText.split("End Hour:")[1].trim();
+                const dateObj = new Date(raw);
+                const hours = dateObj.getHours();
+                const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+                const suffix = hours >= 12 ? 'PM' : 'AM';
+                const hour12 = ((hours + 11) % 12 + 1).toString().padStart(2, '0');
+                modifiedText = `End Hour: ${hour12}:${minutes} ${suffix}`;
+            }
+
                 const noteDiv = document.createElement('div');
                 noteDiv.className = 'prompt-info';
-                noteDiv.textContent = noteText;
+
+                noteDiv.textContent = modifiedText;
                 buttonWrapper.appendChild(noteDiv); // Append notes first
             });
         } catch (err) {
@@ -348,15 +398,15 @@ async function ModifyMedicationContainer() {
                     <input type="text" placeholder="To do item" id="to-do-items" class="general-info to-do-item" value="${med.name || ''}">
                     <h3>Day on repeat</h3>
                     <div class="day-on-repeat">
-                        <input type="text" placeholder="Every_hour" id="repeat-times" class="general-info every-hour-item" value="${med.repeat_times || ''}">
+                        <input type="text" placeholder="Every hour" id="repeat-times" class="general-info every-hour-item" value="${med.repeat_times || ''}">
                         <span class="arrow">→</span>
-                        <input type="text" placeholder="Duration" id="duration-of-reminder" class="general-info frequency-item" value="${med.repeat_duration || ''}">
+                        <input type="text" placeholder="Repeat reminder count" id="duration-of-reminder" class="general-info frequency-item" value="${med.repeat_duration || ''}">
                     </div>
                     <h3>Hour range</h3>
                     <div class="hour-range-container">
-                        <input type="time" class="general-info first-hour-range" id="startHour" value="${med.start_hour ? med.start_hour.toString().padStart(2, '0') + ':00' : ''}">
+                        <input type="time" class="general-info first-hour-range" id="startHour" value="${formatTime(med.start_hour) || ''}">
                         <span class="arrow">→</span>
-                        <input type="time" class="general-info second-hour-range" id="endHour" value="${med.end_hour ? med.end_hour.toString().padStart(2, '0') + ':00' : ''}">
+                        <input type="time" class="general-info second-hour-range" id="endHour" value="${formatTime(med.end_hour) || ''}">
                     </div>
                     <h3>Repeat</h3>
                     <div class="routine_option-and-schedule">
@@ -428,25 +478,27 @@ async function ModifyMedicationContainer() {
             // Submit for edit container click 
 
             editBoxContainer.querySelector('.submit-edit-info').addEventListener('click', async function(event) {
-    event.preventDefault();
+            event.preventDefault();
 
-    // Use editBoxContainer.querySelector to get the correct input values
-    const item = editBoxContainer.querySelector('.to-do-item').value;
-    const day_on_repeat = parseInt(editBoxContainer.querySelector('.every-hour-item').value, 10);
-    const duration_of_reminder = parseInt(editBoxContainer.querySelector('.frequency-item').value, 10);
-    const startHour = parseInt(editBoxContainer.querySelector('.first-hour-range').value.split(":")[0]);
-    const endHour = parseInt(editBoxContainer.querySelector('.second-hour-range').value.split(":")[0]);
-    const repeatSelect = editBoxContainer.querySelector('select').value;
+            // Use editBoxContainer.querySelector to get the correct input values
+            const item = editBoxContainer.querySelector('.to-do-item').value;
+            const day_on_repeat = parseInt(editBoxContainer.querySelector('.every-hour-item').value, 10);
+            const duration_of_reminder = parseInt(editBoxContainer.querySelector('.frequency-item').value, 10);
+            const startHour = editBoxContainer.querySelector('.first-hour-range').value;
+            const endHour = editBoxContainer.querySelector('.second-hour-range').value;
+            const repeatSelect = editBoxContainer.querySelector('select').value;
+            const scheduleHour = parseInt(startHour.split(':')[0], 10);
 
-    const medicationData = {
-        name: item,
-        repeat_times: day_on_repeat,
-        repeat_duration: duration_of_reminder,
-        start_hour: startHour,
-        end_hour: endHour,
-        frequency_type: repeatSelect,
-        schedule_date: savedDate
-    };
+            const medicationData = {
+                name: item,
+                repeat_times: day_on_repeat,
+                repeat_duration: duration_of_reminder,
+                start_hour: startHour,
+                end_hour: endHour,
+                frequency_type: repeatSelect,
+                schedule_date: savedDate,
+                schedule_hour: scheduleHour 
+            };
 
     if (!validateMedicationInput(medicationData)) return;
 

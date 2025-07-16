@@ -40,24 +40,38 @@ function decreaseEnd() {
   }
 }
 
+function indexToTimeString(index) {
+  const hour = index % 12 === 0 ? 12 : index % 12;
+  const ampm = index < 12 ? "AM" : "PM";
+  const hour24 = index === 0 ? 0 : index < 12 ? index : index;
+  return `${hour24.toString().padStart(2, '0')}:00`;
+}
+
 
 async function fetchMedications() {
   const date = document.getElementById("date").value;
   if (!date) {
     console.log("No date selected in calendar input");
     return;
-  }
-
+  } 
+  
   try {
-    const response = await fetch(`http://localhost:3000/medications?date=${date}&start=${startTimeIndex}&end=${endTimeIndex}`);
-    
+
+    const formattedStart = indexToTimeString(startTimeIndex);
+    const formattedEnd = indexToTimeString(endTimeIndex);
+
+    const response = await fetch(`http://localhost:3000/medications?date=${date}&start=${formattedStart}&end=${formattedEnd}`);
+
+
     if (!response.ok) {
       throw new Error('Network response was not ok in script.js');
     }
 
+    console.log(response);
     const medications = await response.json();
 
     displayMedications(medications); // if medication is fine calls display medication
+
   } catch (error) { 
     console.error("Error fetching medications:", error);
   }
@@ -77,7 +91,11 @@ function displayMedications(medications) {
     </div>
   `;
 
-  const medicationMap = {};
+  medications.forEach(med => {
+      console.log(`medication hour: ${med.schedule_hour}`);
+  });
+
+    const medicationMap = {};
 
   medications.forEach(med => {
     if (!medicationMap[med.schedule_hour]) {
@@ -114,7 +132,7 @@ for (let i = startTimeIndex; i <= endTimeIndex; i++) {
 }
 
 
-function toggleAll() {
+function toggleAll() { // Select all button
     const selectAllCheckbox = document.getElementById("selectAll");
     const checkboxes = document.querySelectorAll(".schedule input[type='checkbox']");
 
@@ -137,3 +155,6 @@ document.getElementById("notification-page").addEventListener("click", function 
     window.location.href = "../HTML files/notificationCustomization.html";
   
 });
+
+
+document.getElementById("date").addEventListener("change", fetchMedications);

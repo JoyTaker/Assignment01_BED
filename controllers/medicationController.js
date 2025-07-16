@@ -1,10 +1,12 @@
 const medicationModel = require('../models/medicationModels');
 
 async function getFilteredMedications(req, res) {
-  const { date, start, end } = req.query;
-  console.log("Incoming query:", date, start, end);
+  const { date } = req.query;
+
+
+  console.log("Incoming query:", date);
   try {
-    const medications = await medicationModel.getMedicationsByDateAndTime(date, parseInt(start), parseInt(end));
+    const medications = await medicationModel.getMedicationsByDateAndTime(date);
     res.status(200).json(medications);
   } catch (err) {
     console.error("Error in getFilteredMedications:", err);
@@ -99,16 +101,19 @@ async function addMedication(req, res) {
   }
 
   // Convert & validate start_hour and end_hour
-  const parsedStartHour = Number(start_hour);
-  const parsedEndHour = Number(end_hour);
+  const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/; // Matches '00:00' to '23:59'
+
   if (
-    !Number.isInteger(parsedStartHour) || parsedStartHour < 0 || parsedStartHour > 23 ||
-    !Number.isInteger(parsedEndHour) || parsedEndHour < 0 || parsedEndHour > 23
+    !timeRegex.test(start_hour) ||
+    !timeRegex.test(end_hour)
   ) {
-    return res.status(400).json({ message: "Start and end hours must be whole numbers between 0 and 23" });
+    return res.status(400).json({ message: "Start and end hours must be in HH:mm format (00:00 to 23:59)" });
   }
 
-  // Construct clean object for DB
+  const parsedStartHour = start_hour; // still 'HH:mm' format
+  const parsedEndHour = end_hour;
+  const parsedScheduleHour = parseInt(start_hour.split(':')[0], 10);
+
   const medicationData = {
     name: name.trim(),
     schedule_date,
@@ -117,11 +122,10 @@ async function addMedication(req, res) {
     repeat_duration: parsedRepeatDuration,
     start_hour: parsedStartHour,
     end_hour: parsedEndHour,
-    schedule_hour: parsedStartHour,
+    schedule_hour: parsedScheduleHour,
     repeat_pattern: repeat_pattern || 'Daily'
   };
 
-  medicationData.schedule_hour = parsedStartHour;
 
   try {
     const result = await medicationModel.addMedication(medicationData);
@@ -173,10 +177,12 @@ if (repeat_duration !== undefined && repeat_duration !== "") {
   medicationData.repeat_duration = 0; 
 }
 
-medicationData.start_hour = parseInt(start_hour, 10);
-medicationData.end_hour = parseInt(end_hour, 10);
+medicationData.start_hour = start_hour;
+medicationData.end_hour = end_hour;
 medicationData.repeat_pattern = repeat_pattern || 'Daily';
-medicationData.schedule_hour = parseInt(start_hour, 10);
+
+const [hourStr] = start_hour.split(':');
+medicationData.schedule_hour = parseInt(hourStr, 10);
 
   try {
     const result = await medicationModel.updateMedication(medicationId, medicationData);

@@ -1,19 +1,30 @@
 const sql = require('mssql');
 const dbConfig = require('../dbConfig');
 
-async function getMedicationsByDateAndTime(date, startHour, endHour) {
+
+
+function toSqlTime(timeStr) {
+  const [h, m] = timeStr.split(':');
+  return `${h.padStart(2, '0')}:${m.padStart(2, '0')}:00`;
+}
+
+
+async function getMedicationsByDateAndTime(date) {
   const pool = await sql.connect(dbConfig);
+
   const result = await pool.request()
     .input('date', sql.Date, date)
-    .input('startHour', sql.Int, startHour)
-    .input('endHour', sql.Int, endHour)
     .query(`
-     SELECT * FROM Medications
-     WHERE schedule_date = @date AND is_deleted = 0
-     ORDER BY schedule_hour
+      SELECT * FROM Medications
+      WHERE schedule_date = @date
+        AND is_deleted = 0
+      ORDER BY schedule_hour
     `);
+
   return result.recordset;
 }
+
+
 
 async function getAllMedicationsByDate(date) {
   const pool = await sql.connect(dbConfig);
@@ -78,8 +89,8 @@ async function addMedication(medicationData) {
       .input('frequency_type', sql.VarChar(50), medicationData.frequency_type)
       .input('repeat_times', sql.Int, medicationData.repeat_times)
       .input('repeat_duration', sql.Int, medicationData.repeat_duration)
-      .input('start_hour', sql.Int, medicationData.start_hour)
-      .input('end_hour', sql.Int, medicationData.end_hour)
+      .input('start_hour', sql.Time, toSqlTime(medicationData.start_hour))
+      .input('end_hour', sql.Time, toSqlTime(medicationData.end_hour))
       .input('repeat_pattern', sql.VarChar(50), medicationData.repeat_pattern || 'Daily')
       .input('schedule_hour', sql.Int, medicationData.schedule_hour)
       .input('is_deleted', sql.Bit, 0)
@@ -110,6 +121,7 @@ async function addMedication(medicationData) {
 async function updateMedication(id, medicationData) {
   const pool = await sql.connect(dbConfig);
 
+
   try {
     const result = await pool.request()
       .input('id', sql.Int, id)
@@ -118,8 +130,8 @@ async function updateMedication(id, medicationData) {
       .input('frequency_type', sql.VarChar(50), medicationData.frequency_type)
       .input('repeat_times', sql.Int, medicationData.repeat_times)
       .input('repeat_duration', sql.Int, medicationData.repeat_duration)
-      .input('start_hour', sql.Int, medicationData.start_hour)
-      .input('end_hour', sql.Int, medicationData.end_hour)
+      .input('start_hour', sql.Time, toSqlTime(medicationData.start_hour))
+      .input('end_hour', sql.Time, toSqlTime(medicationData.end_hour))
       .input('repeat_pattern', sql.VarChar(50), medicationData.repeat_pattern || 'Daily')
       .query(`
         UPDATE Medications SET
