@@ -65,6 +65,7 @@ async function fetchAndDisplayNotifications() {
 }
 
 document.addEventListener("DOMContentLoaded", fetchAndDisplayNotifications);
+
 function validateMedicationInput(data) {
     if (!data.name || data.name.trim() === "") {
         alert("Name is required.");
@@ -109,133 +110,149 @@ function validateMedicationInput(data) {
     return true;
 }
 
+async function addMedicationContainer() {
+  const addBtn = document.getElementById('add-container-button');
+  const mainContainer = document.querySelector('.main-container');
 
-async function addMedicationContainer () {
-    document.getElementById('add-container-button').addEventListener('click', function(event) {
+  let addBoxContainer = null;
+
+  addBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+    // Create box if it doesn't exist
+    if (!addBoxContainer) {
+      addBoxContainer = document.createElement("div");
+      addBoxContainer.className = 'add-box-container';
+      addBoxContainer.style.display = 'none';
+
+      addBoxContainer.innerHTML = `
+        <div class="title">
+          <button type="button" id="close-add-window">X</button>
+          <h3>Add Features</h3>
+        </div>
+        <div class="add-features">
+          <h3>To do item</h3>
+          <input type="text" placeholder="To do item" id="to-do-item" class="general-info">
+          <h3>Day on repeat</h3>
+          <div class="day-on-repeat">
+            <input type="text" placeholder="repeat-per-day" id="repeat-times" class="general-info">
+            <span class="arrow">→</span>
+            <input type="text" placeholder="duration (per hour)" id="duration-of-reminder" class="general-info">
+          </div>
+          <h3>Hour range</h3>
+          <div class="hour-range-container">
+            <input type="time" id="first-hour-range" class="general-info">
+            <span class="arrow">→</span>
+            <input type="time" id="second-hour-range" class="general-info">
+          </div>
+          <h3>Repeat</h3>
+          <div class="routine_option-and-schedule">
+            <select class="general-info" id="repeat-select">
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+            <button type="submit" id="submit-add-info">Submit</button>
+          </div>
+        </div>
+      `;
+
+      mainContainer.appendChild(addBoxContainer);
+
+      // Close logic
+      addBoxContainer.querySelector('#close-add-window').addEventListener('click', () => {
+        addBoxContainer.style.display = 'none';
+      });
+
+      // Submit logic
+      addBoxContainer.querySelector('#submit-add-info').addEventListener('click', async (event) => {
         event.preventDefault();
 
-        let addBoxContainer = document.querySelector('.add-box-container');
+        if (!savedDate) {
+          alert("Please select a date first.");
+          return;
+        }
 
-        if (!addBoxContainer) {
-            addBoxContainer = document.createElement("div");
-            addBoxContainer.className = 'add-box-container';
-            addBoxContainer.style.display = 'none';
-            addBoxContainer.innerHTML = `
-                <div class="title">
-                    <button type="button" id="close-add-window">X</button>
-                    <h3>Add Features</h3>
-                </div>
-                <div class="add-features" id="add-features">
-                    <h3>To do item</h3>
-                    <input type="text" placeholder="To do item" id="to-do-item" class="general-info">
-                    <h3>Day on repeat</h3>
-                    <div class="day-on-repeat">
-                        <input type="text" placeholder="Duration (Every hour)" id="repeat-times" class="general-info">
-                        <span class="arrow">→</span>
-                        <input type="text" placeholder="Repeat reminder count" id="duration-of-reminder" class="general-info">
-                    </div>
-                    <h3>Hour range</h3>
-                    <div class="hour-range-container">
-                        <input type="time" id="first-hour-range" class="general-info">
-                        <span class="arrow">→</span>
-                        <input type="time" id="second-hour-range" class="general-info">
-                    </div>
-                    <h3>Repeat</h3>
-                    <div class="routine_option-and-schedule">
-                        <select class="general-info" id="repeat-select">
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
-                            <option value="yearly">Yearly</option>
-                        </select>
-                        <button type="submit" id="submit-add-info">Submit</button>
-                    </div>
-                </div>
-            `;
-            const mainContainer = document.querySelector('.main-container');
-            mainContainer.appendChild(addBoxContainer);
+        const item = addBoxContainer.querySelector("#to-do-item").value.trim();
+        const repeat_times = parseInt(addBoxContainer.querySelector("#repeat-times").value.trim(), 10);
+        const repeat_duration = parseInt(addBoxContainer.querySelector("#duration-of-reminder").value.trim(), 10);
+        const start_hour = addBoxContainer.querySelector("#first-hour-range").value;
+        const end_hour = addBoxContainer.querySelector("#second-hour-range").value;
+        const frequency_type = addBoxContainer.querySelector("#repeat-select").value;
+        const schedule_hour = parseInt(start_hour.split(':')[0], 10);
 
-            addBoxContainer.querySelector('#close-add-window').addEventListener('click', () => {
-                addBoxContainer.style.display = 'none';
+        const medicationData = {
+          name: item,
+          repeat_times,
+          repeat_duration,
+          start_hour,
+          end_hour,
+          frequency_type,
+          schedule_date: savedDate,
+          schedule_hour
+        };
+
+        if(!validateDurationAndRepeat(medicationData)) return;
+
+        try {
+          const response = await fetch('http://localhost:3000/medications', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(medicationData)
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            // Clear inputs
+            addBoxContainer.querySelectorAll('input, select').forEach(el => {
+              if (el.tagName === 'SELECT') el.selectedIndex = 0;
+              else el.value = '';
             });
 
-           addBoxContainer.querySelector('#submit-add-info').addEventListener('click', async function(event) {
-                event.preventDefault();
-
-                if (!savedDate) {
-                    alert("Please select a date first.");
-                    return;
-                }
-
-                const item = document.getElementById("to-do-item").value;
-                const repeatRaw = document.getElementById("repeat-times").value.trim();
-                const day_on_repeat = repeatRaw === "" ? NaN : Number(repeatRaw);
-
-                const durationRaw = document.getElementById("duration-of-reminder").value.trim();
-                const duration_of_reminder = durationRaw === "" ? NaN : Number(durationRaw);
-
-                const startHour = document.getElementById('first-hour-range').value;
-                const endHour = document.getElementById('second-hour-range').value;
-
-                const repeatSelect = document.getElementById('repeat-select').value;
-
-                const scheduleHour = parseInt(startHour.split(':')[0], 10);
-
-                const medicationData = {
-                    name: item,
-                    repeat_times: day_on_repeat,
-                    repeat_duration: duration_of_reminder,
-                    start_hour: startHour,
-                    end_hour: endHour,
-                    frequency_type: repeatSelect,
-                    schedule_date: savedDate,
-                    schedule_hour: scheduleHour
-                };
-
-                if (!validateMedicationInput(medicationData)) return;
-
-
-                try {
-                    const response = await fetch('http://localhost:3000/medications', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(medicationData)
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok) {
-                    addBoxContainer.style.display = 'none';
-                    ModifyMedicationContainer(); // Refresh list
-                    } else {
-                    alert(result.message || "Failed to add medication.");
-                    }
-                } catch (err) {
-                    console.error("Error adding medication:", err);
-                    alert("Server error. Could not add medication.");
-                }
-                });
-
-
+            addBoxContainer.style.display = 'none';
+            ModifyMedicationContainer();
+          } else {
+            alert(result.message || "Failed to add medication.");
+          }
+        } catch (err) {
+          console.error("Error adding medication:", err);
+          alert("Server error. Could not add medication.");
         }
-        addBoxContainer.style.display = (addBoxContainer.style.display === 'none') ? 'flex' : 'none';
-    });
+      });
+    }
+
+    // Toggle show/hide
+    addBoxContainer.style.display = (addBoxContainer.style.display === 'none') ? 'flex' : 'none';
+  });
 }
+
 
 document.addEventListener('DOMContentLoaded', addMedicationContainer);
 
+function parseToMinutes(timeStr) {
+  const [hour, minute] = timeStr.split(':').map(Number);
+  return hour * 60 + minute;
+}
 
-function validateDurationAndRepeat (duration, repeat, startHour, endHour) {
-    const timestamp1 = startHour.getTime();
-    const timestamp2 = endHour.getTime();
 
-    if (timestamp1 - timestamp2 < duration * repeat) {
-        prompt(`Duration and repeat is too much`);
-        return;
+function validateDurationAndRepeat (medications) {
+    console.log(`medications: ${medications}`);
+    const startMin = parseToMinutes(medications.start_hour);
+    const endMin = parseToMinutes(medications.end_hour);
+
+    const durationInBetween = endMin - startMin;
+    console.log(`Duration in between: ${durationInBetween}, repeat times: ${medications.repeat_times}`);
+    const durationSelected = medications.repeat_times * medications.repeat_duration * 60;
+
+    console.log(`Duration: ${durationSelected}`);
+    if (durationInBetween < durationSelected) {
+        alert("Cannot add medication box, due to repeat time and duration exceeding time interval limits");
+        return false            
     }
-    
-}   
 
+    return true;
+}
 
 
 // Add container based on notifications
@@ -500,8 +517,9 @@ async function ModifyMedicationContainer() {
                 schedule_hour: scheduleHour 
             };
 
-    if (!validateMedicationInput(medicationData)) return;
+    if (!validateMedicationInput(medicationData) || !validateDurationAndRepeat(medicationData)) return;
 
+    // validateDurationAndRepeat(medicationData)
     try {
         const response = await fetch(`http://localhost:3000/medications/${med.id}`, {
             method: 'PUT',
@@ -513,6 +531,8 @@ async function ModifyMedicationContainer() {
 
         if (response.ok) {
             editBoxContainer.style.display = 'none';
+            console.log(medicationData['name']);
+            
             ModifyMedicationContainer(); // Refresh list
             alert("Medication updated successfully!");
         } else {

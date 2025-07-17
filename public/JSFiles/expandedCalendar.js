@@ -78,6 +78,20 @@ async function fetchMedications() {
 }
 
 
+function formatTo12HourTimeLocal(isoTimeString) {
+  const date = new Date(isoTimeString); // Uses local timezone by default
+  let hours = date.getHours();
+  const minutes = date.getMinutes();
+
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+  const minutesStr = minutes.toString().padStart(2, '0');
+
+  return `${hours}:${minutesStr} ${ampm}`;
+}
+
+
+
 function displayMedications(medications) {
   console.log("Displaying medications:", medications);
 
@@ -93,6 +107,7 @@ function displayMedications(medications) {
 
   medications.forEach(med => {
       console.log(`medication hour: ${med.schedule_hour}`);
+      console.log(`medication time: ${med.start_hour}`);
   });
 
     const medicationMap = {};
@@ -101,7 +116,10 @@ function displayMedications(medications) {
     if (!medicationMap[med.schedule_hour]) {
       medicationMap[med.schedule_hour] = [];
     }
-    medicationMap[med.schedule_hour].push(med.name);
+    medicationMap[med.schedule_hour].push({
+        name: med.name,
+        start: med.start_hour
+    });
   });
 
 
@@ -113,7 +131,7 @@ for (let i = startTimeIndex; i <= endTimeIndex; i++) {
   entry.className = "time-entry";
 
   if (medsAtHour && medsAtHour.length > 0) {
-    const medNames = medsAtHour.join(", "); // join names
+    const medNames = medsAtHour.map(med => `${med.name} (${formatTo12HourTimeLocal(med.start)})`).join(", ");
     entry.innerHTML = `
       <span>${hourLabel}</span>
       <input type="text" value="${medNames}" disabled>

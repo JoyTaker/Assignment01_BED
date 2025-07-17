@@ -11,7 +11,6 @@ function toSqlTime(timeStr) {
 }
 
 
-
 async function getMedicationsByDateAndTime(date) {
   const pool = await sql.connect(dbConfig);
 
