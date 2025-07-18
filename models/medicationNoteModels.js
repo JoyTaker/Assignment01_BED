@@ -57,8 +57,20 @@ async function getAutoNoteFields(id) {
         return result.recordset;
 }
 
+
+async function deleteNote(id) {
+    const pool = await sql.connect(dbConfig);
+    const result = await pool.request()
+        .input("id", sql.Int, id)
+        .query(`
+           SELECT * FROM MedicationNotes
+           
+        `);
+}
+
 module.exports = {
     addNote, 
     getNote,
-    getAutoNoteFields
+    getAutoNoteFields,
+    deleteNote
 };

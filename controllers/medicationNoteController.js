@@ -1,5 +1,8 @@
 const { addNote, getNote, getAutoNoteFields } = require("../models/medicationNoteModels"); // fixed file name
 
+// Foreign database interactions
+const { generateAndStoreAutoNote } = require("../db_interactions/dbInteraction");
+
 async function createNote(req, res) {
     const { medicationId, note_text } = req.body;
 
@@ -56,6 +59,9 @@ async function getAutoNoteFieldsController(req, res) {
             `Frequency Type: ${med.frequency_type}`,
             `Repeat Pattern: ${med.repeat_pattern}`
         ];
+
+        // Add notes into the DB
+        await generateAndStoreAutoNote(id);
 
         res.status(200).json(notes);
     } catch (err) {
