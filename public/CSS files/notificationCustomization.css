@@ -188,7 +188,7 @@
     gap: 10px;
 }
 
-.button-wrapper {
+.notes-wrapper {
     display: flex;  
     flex-direction: row;
     overflow-x: auto;
@@ -202,14 +202,14 @@
 }
 
 /* Optional for WebKit-based browsers (Chrome/Safari) */
-.button-wrapper::-webkit-scrollbar {
+.notes-wrapper::-webkit-scrollbar {
     height: 6px;
 }
-.button-wrapper::-webkit-scrollbar-thumb {
+.notes-wrapper::-webkit-scrollbar-thumb {
     background: #888;
     border-radius: 10px;
 }
-.button-wrapper::-webkit-scrollbar-track {
+.notes-wrapper::-webkit-scrollbar-track {
     background: transparent;
 }
 
@@ -231,6 +231,25 @@
     color: white;
 }
 
+.note-div-delete {
+    display: flex;
+    align-items: center;    /* vertically center */
+    justify-content: center; /* horizontally center */
+    position: relative;
+    left: 9px;
+    border-radius: 15px;
+    font-weight: 600;
+    height: 90%;
+    border: 1.5px solid grey;
+    top: .5px;
+    background-color: rgb(255, 91, 32);
+    color: white;
+    padding: 8px 8px 8px 8px;
+} .note-div-delete:hover {
+    cursor: pointer;
+    color: grey;
+    background-color: white;
+}
 
 .add-button {
     background-color: orange;

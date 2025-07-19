@@ -36,6 +36,10 @@ app.post('/medication-notes', notificationController.createNote);
 app.get('/medication-notes', notificationController.retrieveNote);
 app.get('/medications/:id/notes/auto', notificationController.getAutoNoteFieldsController);
 
+// Deletes specific medications so no DELETE route
+app.post("/medications/delete/notes/by-details", notificationController.deleteSpecificNoteController);
+
+
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);

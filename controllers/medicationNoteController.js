@@ -1,18 +1,18 @@
-const { addNote, getNote, getAutoNoteFields } = require("../models/medicationNoteModels"); // fixed file name
+const { addNote, getNote, getAutoNoteFields, deleteSpecificNote } = require("../models/medicationNoteModels"); // fixed file name
 
 // Foreign database interactions
 const { generateAndStoreAutoNote } = require("../db_interactions/dbInteraction");
 
 async function createNote(req, res) {
-    const { medicationId, note_text } = req.body;
+    const { medicationId, note_text, note_type } = req.body;
 
     // Use the correct variable name
-    if (!medicationId || !note_text) {
+    if (!medicationId || !note_text || !note_type) {
         return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const result = await addNote(medicationId, note_text); // pass medicationId
-
+    const result = await addNote(medicationId, note_text, 0, note_type); // pass medicationId
+    
     if (result.success) {
         return res.status(201).json({ message: "Successfully added notes" });
     } else {
@@ -70,10 +70,25 @@ async function getAutoNoteFieldsController(req, res) {
     }
 }
 
+async function deleteSpecificNoteController (req, res) {
+    const { medication_id, note_text } = req.body;
+
+    if (!medication_id || !note_text) {
+        return res.status(400).json({ message: "Missing note ID" });
+    }
+
+    const result = await deleteSpecificNote(medication_id, note_text);
+    if (result.success) {
+        return res.status(200).json({ message: "Note deleted" });
+    } else {
+        return res.status(500).json({ message: result.message });
+    }
+}
 
 
 module.exports = {
     createNote,
     retrieveNote,
-    getAutoNoteFieldsController
+    getAutoNoteFieldsController,
+    deleteSpecificNoteController
 };

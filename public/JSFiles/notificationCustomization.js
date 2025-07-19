@@ -235,20 +235,28 @@ function parseToMinutes(timeStr) {
   return hour * 60 + minute;
 }
 
-
-function validateDurationAndRepeat (medications) {
-    console.log(`medications: ${medications}`);
+function validateDurationAndRepeat(medications) {
+    console.log(`medications: ${JSON.stringify(medications)}`);
     const startMin = parseToMinutes(medications.start_hour);
     const endMin = parseToMinutes(medications.end_hour);
 
-    const durationInBetween = endMin - startMin;
+    console.log(`startHour: ${medications.start_hour}, endHour: ${medications.end_hour}`);
+
+    let durationInBetween;
+    if (endMin >= startMin) {
+        durationInBetween = endMin - startMin;
+    } else {
+        durationInBetween = (1440 - startMin) + endMin; 
+    }
+
     console.log(`Duration in between: ${durationInBetween}, repeat times: ${medications.repeat_times}`);
+
     const durationSelected = medications.repeat_times * medications.repeat_duration * 60;
 
-    console.log(`Duration: ${durationSelected}`);
+    console.log(`Duration needed: ${durationSelected}`);
     if (durationInBetween < durationSelected) {
-        alert("Cannot add medication box, due to repeat time and duration exceeding time interval limits");
-        return false            
+        alert("Cannot add medication box — repeat time × duration exceeds time interval.");
+        return false;
     }
 
     return true;
@@ -299,8 +307,8 @@ async function ModifyMedicationContainer() {
             const layer2 = document.createElement("div");
             layer2.className = 'layer2-container';  
 
-            const buttonWrapper = document.createElement("div");
-            buttonWrapper.className = 'button-wrapper';
+            const notesWrapper = document.createElement("div");
+            notesWrapper.className = 'notes-wrapper';
 
             const addButton = document.createElement("button");
             addButton.type = 'button';
@@ -311,11 +319,10 @@ async function ModifyMedicationContainer() {
           try {
             const noteRes = await fetch(`http://localhost:3000/medications/${med.id}/notes/auto`);
             const notes = await noteRes.json();
-            
-            
+
+            notesWrapper.innerHTML = '';
+
             notes.forEach(noteText => {
-                
-                
              let modifiedText = noteText;
 
             if (typeof noteText !== 'string') {
@@ -342,64 +349,96 @@ async function ModifyMedicationContainer() {
                 const hour12 = ((hours + 11) % 12 + 1).toString().padStart(2, '0');
                 modifiedText = `End Hour: ${hour12}:${minutes} ${suffix}`;
             }
+            
+            // Create note delete button
+            const noteDivDelete = document.createElement('button');
+            noteDivDelete.className = 'note-div-delete';
+            noteDivDelete.type = 'button';
+            noteDivDelete.textContent = 'X';
+            notesWrapper.appendChild(noteDivDelete);
 
-                const noteDiv = document.createElement('div');
-                noteDiv.className = 'prompt-info';
+            // Create notes
+            const noteDiv = document.createElement('div');
+            noteDiv.className = 'prompt-info';
+            
+            noteDiv.textContent = modifiedText;
+            notesWrapper.appendChild(noteDiv); // Append notes first
 
-                noteDiv.textContent = modifiedText;
-                buttonWrapper.appendChild(noteDiv); // Append notes first
+            console.log(`medication id: ${med.id}`);
+            noteDivDelete.addEventListener('click', function(){
+                deleteSpecificNoteById(med.id, noteText.split(":")[0], noteDiv, noteDivDelete);
+            });
+
             });
         } catch (err) {
             console.error(`Failed to load notes for med ${med.id}`, err);
         }
+        await loadManualNotes(med.id, notesWrapper);
         
-        layer2.appendChild(buttonWrapper);
+        layer2.appendChild(notesWrapper);
         layer2.appendChild(addButton); 
-            // Add new note through + button
 
-            addButton.addEventListener('click', () => {
-                let inputBox = layer2.querySelector('input.prompt-info');
-                if (!inputBox) {
-                    inputBox = document.createElement("input");
-                    inputBox.className = 'prompt-info';
-                    buttonWrapper.appendChild(inputBox);
-                    inputBox.focus();
+        // Add new note through + button 
 
-                    let entered = false;
+        addButton.addEventListener('click', () => {
 
-                    inputBox.addEventListener('keydown', async function (e) {
-                        if (e.key === 'Enter') {
-                            e.preventDefault();
-                            const value = inputBox.value.trim();
-                            if (value === '') {
-                                inputBox.remove();
-                            } else {
-                                entered = true;
-                                await postNotes(med.id, value); 
-                                const textBox = document.createElement('div');
-                                textBox.className = 'prompt-info';
-                                textBox.textContent = value;
-                                inputBox.replaceWith(textBox);
-                            }
-                        }
-                    });
+            let inputBox = layer2.querySelector('input.prompt-info');
+            if (!inputBox) {
+                inputBox = document.createElement("input");
+                inputBox.className = 'prompt-info';
+                notesWrapper.appendChild(inputBox);
+                inputBox.focus();
 
-                    inputBox.addEventListener('blur', async function () {
+                let entered = false;
+
+                inputBox.addEventListener('keydown', async function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
                         const value = inputBox.value.trim();
-                        if (!entered && value === '') {
+                        if (value === '') {
                             inputBox.remove();
-                        } else if (!entered && value !== '') {
+                        } else {
                             entered = true;
-                            await postNotes(med.id, value);
+                            await postNotes(med.id, value); 
+                            
+                            const noteDivDelete = document.createElement('button');
+                            noteDivDelete.className = 'note-div-delete';
+                            noteDivDelete.type = 'button';
+                            noteDivDelete.textContent = 'X';
+
                             const textBox = document.createElement('div');
                             textBox.className = 'prompt-info';
                             textBox.textContent = value;
+
+                            noteDivDelete.addEventListener('click', function () {
+                                deleteSpecificNoteById(med.id, value.split(":")[0], textBox, noteDivDelete);
+                            });
+
                             inputBox.replaceWith(textBox);
-                            buttonWrapper.appendChild(textBox);
+                            notesWrapper.appendChild(noteDivDelete);
+                            notesWrapper.appendChild(textBox);
+
                         }
-                    });
+                    }
+                });
+
+                inputBox.addEventListener('blur', async function () {
+                    const value = inputBox.value.trim();
+                    if (!entered && value === '') {
+                        inputBox.remove();
+                    } else if (!entered && value !== '') {
+                        entered = true;
+                        await postNotes(med.id, value);
+                        const textBox = document.createElement('div');
+                        textBox.className = 'prompt-info';
+                        textBox.textContent = value;
+                        inputBox.replaceWith(textBox);
+                        notesWrapper.appendChild(textBox);
+                    }
+                });
                 }
             });
+
 
             // Edit Box
             const editBoxContainer = document.createElement("div");
@@ -552,8 +591,8 @@ async function ModifyMedicationContainer() {
 
 document.addEventListener('DOMContentLoaded', ModifyMedicationContainer);
 
-// Post notes into the sql
 
+// Post notes into the sql
 
 async function postNotes(medicationId, value) {
 
@@ -565,7 +604,8 @@ async function postNotes(medicationId, value) {
             },
             body: JSON.stringify({
                 medicationId: medicationId,
-                note_text: value
+                note_text: value,
+                note_type: 'manual'
             })
         });
 
@@ -580,6 +620,65 @@ async function postNotes(medicationId, value) {
         console.error("Error during fetch", err);
     }
 }
+
+// Load manual notes
+async function loadManualNotes(medId, notesWrapper) {
+    try {
+        const manualNoteRes = await fetch(`http://localhost:3000/medication-notes?medicationId=${medId}`);
+        const manualNotes = await manualNoteRes.json();
+
+        manualNotes.forEach(note => {
+            const noteDiv = document.createElement('div');
+            noteDiv.className = 'prompt-info';
+            noteDiv.textContent = note.note_text;
+
+            const noteDivDelete = document.createElement('button');
+            noteDivDelete.className = 'note-div-delete';
+            noteDivDelete.type = 'button';
+            noteDivDelete.textContent = 'X';
+
+            notesWrapper.appendChild(noteDivDelete);
+            notesWrapper.appendChild(noteDiv);
+
+            noteDivDelete.addEventListener('click', function () {
+                deleteSpecificNoteById(medId, note.note_text.split(":")[0], noteDiv, noteDivDelete);
+            });
+        });
+    } catch (err) {
+        console.error(`Failed to load manual notes for med ${medId}`, err);
+    }
+}
+
+
+
+// Delete specific notes
+async function deleteSpecificNoteById(medId, noteText, noteDiv, deleteButton) {
+    try {
+        const res = await fetch(`http://localhost:3000/medications/delete/notes/by-details`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                medication_id: medId,
+                note_text: noteText
+            })
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+            noteDiv.remove();
+            deleteButton.remove();
+        } else {
+            alert("Failed to delete note: " + result.message);
+        }
+    } catch (err) {
+        console.error("Delete error:", err);
+        alert("Server error");
+    }
+}
+
 
 
 window.addEventListener("DOMContentLoaded", displayDate);

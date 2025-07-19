@@ -1,5 +1,5 @@
 
-const { getAutoNoteFields, addNote } = require('../models/medicationNoteModels');
+const { getAutoNoteFields, addNote, noteExists } = require('../models/medicationNoteModels');
 
 
 function formatTimeString(timeInput) {
@@ -38,9 +38,12 @@ async function generateAndStoreAutoNote(medicationId) {
 
     const insertResults = [];
 
-    for (const noteText of noteLines) {
+   for (const noteText of noteLines) {
+    const exists = await noteExists(medicationId, noteText);
+    if (!exists) {
         const result = await addNote(medicationId, noteText);
         insertResults.push(result);
+    }
     }
 
     return { success: true, insertedCount: insertResults.length };
