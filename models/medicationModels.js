@@ -93,17 +93,16 @@ async function addMedication(medicationData) {
       .input('repeat_duration', sql.Int, medicationData.repeat_duration)
       .input('start_hour', sql.Time, toSqlTime(medicationData.start_hour))
       .input('end_hour', sql.Time, toSqlTime(medicationData.end_hour))
-      .input('repeat_pattern', sql.VarChar(50), medicationData.repeat_pattern || 'Daily')
       .input('schedule_hour', sql.Int, medicationData.schedule_hour)
       .input('is_deleted', sql.Bit, 0)
       .query(`
         INSERT INTO Medications (
           name, schedule_date, frequency_type, repeat_times,
-          repeat_duration, start_hour, end_hour, repeat_pattern, is_deleted, schedule_hour
+          repeat_duration, start_hour, end_hour, is_deleted, schedule_hour
         )
         VALUES (
           @name, @schedule_date, @frequency_type, @repeat_times,
-          @repeat_duration, @start_hour, @end_hour, @repeat_pattern, @is_deleted, @schedule_hour
+          @repeat_duration, @start_hour, @end_hour, @is_deleted, @schedule_hour
         )
       `);
 
@@ -129,12 +128,11 @@ async function updateMedication(id, medicationData) {
       .input('id', sql.Int, id)
       .input('name', sql.VarChar(255), medicationData.name)
       .input('schedule_date', sql.Date, medicationData.schedule_date)
-      .input('frequency_type', sql.VarChar(50), medicationData.frequency_type)
+      .input('frequency_type', sql.VarChar(50), medicationData.frequency_type || "Daily")
       .input('repeat_times', sql.Int, medicationData.repeat_times)
       .input('repeat_duration', sql.Int, medicationData.repeat_duration)
       .input('start_hour', sql.Time, toSqlTime(medicationData.start_hour))
       .input('end_hour', sql.Time, toSqlTime(medicationData.end_hour))
-      .input('repeat_pattern', sql.VarChar(50), medicationData.repeat_pattern || 'Daily')
       .query(`
         UPDATE Medications SET
           name = @name,
@@ -144,7 +142,6 @@ async function updateMedication(id, medicationData) {
           repeat_duration = @repeat_duration,
           start_hour = @start_hour,
           end_hour = @end_hour,
-          repeat_pattern = @repeat_pattern
         WHERE id = @id
       `);
 

@@ -57,7 +57,6 @@ async function getAutoNoteFieldsController(req, res) {
             `End Hour: ${med.end_hour}`,
             `Repeat Duration: ${med.repeat_duration}`,
             `Frequency Type: ${med.frequency_type}`,
-            `Repeat Pattern: ${med.repeat_pattern}`
         ];
 
         // Add notes into the DB

@@ -76,7 +76,6 @@ async function addMedication(req, res) {
     repeat_duration,
     start_hour,
     end_hour,
-    repeat_pattern,
     
   } = req.body;
 
@@ -117,13 +116,12 @@ async function addMedication(req, res) {
   const medicationData = {
     name: name.trim(),
     schedule_date,
-    frequency_type: frequency_type.trim(),
+    frequency_type: frequency_type.trim() || "Daily",
     repeat_times: parsedRepeatTimes,
     repeat_duration: parsedRepeatDuration,
     start_hour: parsedStartHour,
     end_hour: parsedEndHour,
     schedule_hour: parsedScheduleHour,
-    repeat_pattern: repeat_pattern || 'Daily'
   };
 
 
@@ -154,7 +152,6 @@ async function updateMedicationController(req, res) {
     repeat_duration,
     start_hour,
     end_hour,
-    repeat_pattern
   } = medicationData;
 
   // Validate required fields
@@ -179,7 +176,6 @@ if (repeat_duration !== undefined && repeat_duration !== "") {
 
 medicationData.start_hour = start_hour;
 medicationData.end_hour = end_hour;
-medicationData.repeat_pattern = repeat_pattern || 'Daily';
 
 const [hourStr] = start_hour.split(':');
 medicationData.schedule_hour = parseInt(hourStr, 10);

@@ -246,6 +246,7 @@ function validateDurationAndRepeat(medications) {
     if (endMin >= startMin) {
         durationInBetween = endMin - startMin;
     } else {
+        // 1:00 < 23:00 
         durationInBetween = (1440 - startMin) + endMin; 
     }
 

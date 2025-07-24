@@ -32,7 +32,6 @@ async function generateAndStoreAutoNote(medicationId) {
         `End Hour: ${formatTimeString(med.end_hour)}`,
         `Repeat Duration: ${med.repeat_duration}`,
         `Frequency Type: ${med.frequency_type}`,
-        `Repeat Pattern: ${med.repeat_pattern}`
     ];
 
 
