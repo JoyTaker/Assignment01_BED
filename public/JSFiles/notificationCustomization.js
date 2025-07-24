@@ -376,6 +376,7 @@ async function ModifyMedicationContainer() {
         }
         await loadManualNotes(med.id, notesWrapper);
         
+        
         layer2.appendChild(notesWrapper);
         layer2.appendChild(addButton); 
 

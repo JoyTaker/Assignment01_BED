@@ -40,7 +40,7 @@ async function generateAndStoreAutoNote(medicationId) {
    for (const noteText of noteLines) {
     const exists = await noteExists(medicationId, noteText);
     if (!exists) {
-        const result = await addNote(medicationId, noteText);
+        const result = await addNote(medicationId, noteText, 0, 'auto');
         insertResults.push(result);
     }
     }
