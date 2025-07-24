@@ -110,40 +110,52 @@ function displayMedications(medications) {
       console.log(`medication time: ${med.start_hour}`);
   });
 
-    const medicationMap = {};
-
+ const medicationMap = {};
   medications.forEach(med => {
-    if (!medicationMap[med.schedule_hour]) {
-      medicationMap[med.schedule_hour] = [];
-    }
-    medicationMap[med.schedule_hour].push({
+    if (!med.start_hour) return;
+
+    const baseDate = new Date(med.start_hour); // changes start hour to calculatable time 02:00:00.0000000 ISO format
+    
+    for (let i = 0; i <= med.repeat_times; ++i) {
+      const newDate = new Date(baseDate.getTime() + i * med.repeat_duration * 60 * 60 * 1000); 
+      // getTime() converts all to milliseconds, then Date converts back to 02:00:00.0000000 ISO format
+
+      const hourKey = newDate.getHours(); // converted back to the original time for the key of the map
+      const formattedTime = newDate.toISOString(); // full ISO string like "1970-01-01T10:00:00.000Z"
+
+      if (!medicationMap[hourKey]) {
+        medicationMap[hourKey] = [];
+      }
+
+      medicationMap[hourKey].push({
         name: med.name,
-        start: med.start_hour
-    });
+        start: formattedTime // Needs to be the formatted time and then converted by the formatTo12HourTimeLocal 
+      });                    // function to get accurate output like 10:03am output
+    }
   });
 
 
-for (let i = startTimeIndex; i <= endTimeIndex; i++) {
-  const hourLabel = times[i];
-  const medsAtHour = medicationMap[i]; // Array or undefined
+  for (let i = startTimeIndex; i <= endTimeIndex; i++) {
+    const hourLabel = times[i];
+    const medsAtHour = medicationMap[i]; 
 
-  const entry = document.createElement("div");
-  entry.className = "time-entry";
+    const entry = document.createElement("div");
+    entry.className = "time-entry";
 
-  if (medsAtHour && medsAtHour.length > 0) {
-    const medNames = medsAtHour.map(med => `${med.name} (${formatTo12HourTimeLocal(med.start)})`).join(", ");
-    entry.innerHTML = `
-      <span>${hourLabel}</span>
-      <input type="text" value="${medNames}" disabled>
-      <input type="checkbox">
-    `;
-  } else {
-    // Just show the time label, leave blank
-    entry.innerHTML = `
-      <span>${hourLabel}</span>
-      <input type="text" value="" disabled>
-    `;
-  }
+    if (medsAtHour && medsAtHour.length > 0) {
+      const medNames = medsAtHour.map(med => `${med.name} (${formatTo12HourTimeLocal(med.start)})`).join(", ");
+      entry.innerHTML = `
+        <span>${hourLabel}</span>
+        <input type="text" value="${medNames}" disabled>
+        <input type="checkbox">
+      `;
+    } else {
+      // Just show the time label, leave blank
+      entry.innerHTML = `
+        <span>${hourLabel}</span>
+        <input type="text" value="" disabled>
+      `;
+    }
 
   scheduleDiv.appendChild(entry);
 }
