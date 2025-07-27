@@ -15,6 +15,7 @@ const {
 } = require('./controllers/medicationController');
 
 const notificationController = require("./controllers/medicationNoteController");
+const ringtoneController = require("./controllers/ringtoneController");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -39,6 +40,8 @@ app.get('/medications/:id/notes/auto', notificationController.getAutoNoteFieldsC
 // Deletes specific medications so no DELETE route
 app.post("/medications/delete/notes/by-details", notificationController.deleteSpecificNoteController);
 
+// Post ringtone
+app.put("/medications/:id/ringtone", ringtoneController.postRingtoneByIdController);
 
 
 app.listen(port, () => {

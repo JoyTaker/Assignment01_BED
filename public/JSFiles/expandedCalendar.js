@@ -1,4 +1,5 @@
 
+
 const times = [
   "12am", "1am", "2am", "3am", "4am", "5am", "6am", "7am", "8am",
   "9am", "10am", "11am",
@@ -62,8 +63,7 @@ async function fetchMedications() {
 
     const response = await fetch(`http://localhost:3000/medications?date=${date}&start=${formattedStart}&end=${formattedEnd}`);
 
-
-    if (!response.ok) {
+    if (!response.ok) { 
       throw new Error('Network response was not ok in script.js');
     }
 
@@ -76,6 +76,11 @@ async function fetchMedications() {
     console.error("Error fetching medications:", error);
   }
 }
+
+// Redirect to another page when clicked on the play-ringtone
+document.getElementById("play-ringtone").addEventListener("click", function(){
+   window.location.href = "../HTML files/ringtoneSelection.html";
+});
 
 
 function formatTo12HourTimeLocal(isoTimeString) {
@@ -105,11 +110,6 @@ function displayMedications(medications) {
     </div>
   `;
 
-  medications.forEach(med => {
-      console.log(`medication hour: ${med.schedule_hour}`);
-      console.log(`medication time: ${med.start_hour}`);
-  });
-
  const medicationMap = {};
   medications.forEach(med => {
     if (!med.start_hour) return;
@@ -128,12 +128,12 @@ function displayMedications(medications) {
       }
 
       medicationMap[hourKey].push({
+        id: med.id,
         name: med.name,
         start: formattedTime // Needs to be the formatted time and then converted by the formatTo12HourTimeLocal 
       });                    // function to get accurate output like 10:03am output
     }
   });
-
 
   for (let i = startTimeIndex; i <= endTimeIndex; i++) {
     const hourLabel = times[i];
@@ -143,12 +143,23 @@ function displayMedications(medications) {
     entry.className = "time-entry";
 
     if (medsAtHour && medsAtHour.length > 0) {
-      const medNames = medsAtHour.map(med => `${med.name} (${formatTo12HourTimeLocal(med.start)})`).join(", ");
-      entry.innerHTML = `
-        <span>${hourLabel}</span>
-        <input type="text" value="${medNames}" disabled>
-        <input type="checkbox">
+      entry.innerHTML = `<span>${hourLabel}</span>`;
+
+    const medGroup = document.createElement("div");
+    medGroup.className = "medication-group";
+
+    medsAtHour.forEach(med => {
+      const medBox = document.createElement("div");
+      medBox.className = "med-box";
+      medBox.innerHTML = `
+        <input type="text" value="${med.name} (${formatTo12HourTimeLocal(med.start)})" disabled>
+        <input type="checkbox" class="calendar-checkbox" data-medication-id="${med.id}">
       `;
+      medGroup.appendChild(medBox);
+    });
+
+    entry.appendChild(medGroup);
+
     } else {
       // Just show the time label, leave blank
       entry.innerHTML = `
@@ -161,8 +172,27 @@ function displayMedications(medications) {
 }
 }
 
+// Detect if the dynamic checkbox is selected
+document.addEventListener("change", function(event) {
+  if (event.target.classList.contains("calendar-checkbox")) {
+    const medId = event.target.dataset.medicationId;
+    let selectedIds = JSON.parse(localStorage.getItem("selectedMedicationIds") || "[]");
 
-function toggleAll() { // Select all button
+    if (event.target.checked) {
+       if (!selectedIds.includes(medId)) {
+        selectedIds.push(medId);
+      }
+    } else {
+        selectedIds = selectedIds.filter(id => id !== medId);
+    }
+    localStorage.setItem("selectedMedicationIds", JSON.stringify(selectedIds));
+    console.log("Updated selected IDs:", selectedIds);
+  }
+});
+
+
+// Select all button
+function toggleAll() { 
     const selectAllCheckbox = document.getElementById("selectAll");
     const checkboxes = document.querySelectorAll(".schedule input[type='checkbox']");
 

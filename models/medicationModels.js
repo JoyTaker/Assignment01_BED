@@ -27,7 +27,6 @@ async function getMedicationsByDateAndTime(date) {
 }
 
 
-
 async function getAllMedicationsByDate(date) {
   const pool = await sql.connect(dbConfig);
   const result = await pool.request()
