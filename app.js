@@ -11,7 +11,8 @@ const {
     getAllMedicationByDate,
     deleteMedicationById,
     addMedication,
-    updateMedicationController
+    updateMedicationController,
+    getMedicationOccurrencesController
 } = require('./controllers/medicationController');
 
 const notificationController = require("./controllers/medicationNoteController");
@@ -43,6 +44,8 @@ app.post("/medications/delete/notes/by-details", notificationController.deleteSp
 // Post ringtone
 app.put("/medications/:id/ringtone", ringtoneController.postRingtoneByIdController);
 
+// Retrieve from MedicationOccurences Database
+app.get('/medication-occurrences', getMedicationOccurrencesController);
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);

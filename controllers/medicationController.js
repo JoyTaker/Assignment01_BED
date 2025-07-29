@@ -102,7 +102,7 @@ async function addMedication(req, res) {
   // Convert & validate start_hour and end_hour
   const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/; // Matches '00:00' to '23:59'
 
-  if (
+  if (  
     !timeRegex.test(start_hour) ||
     !timeRegex.test(end_hour)
   ) {
@@ -138,6 +138,7 @@ async function addMedication(req, res) {
     return res.status(500).json({ message: "Server error" });
   }
 }
+
 
 // Update medication
 async function updateMedicationController(req, res) {
@@ -195,6 +196,34 @@ medicationData.schedule_hour = parseInt(hourStr, 10);
 }
 
 
+async function getMedicationOccurrencesController(req, res) {
+  try {
+    const occurrences = await medicationModel.getAllMedicationOccurrences(); // uses schedule_date + schedule_hour now
+
+    const formatted = occurrences.map(row => {
+      const dateStr = new Date(row.schedule_date).toISOString().split("T")[0]; // "YYYY-MM-DD"
+      const timeStr = row.schedule_hour; // should already be in "HH:mm:ss" or similar
+
+      const occurrence_datetime = new Date(`${dateStr}T${timeStr}`);
+
+      return {
+        medication_id: row.medication_id,
+        name: row.name,
+        audio_link: row.audio_link,
+        schedule_date: row.schedule_date,
+        occurrence_time: row.occurrence_time,
+        schedule_hour: row.schedule_hour,
+        occurrence_datetime, // constructed full datetime
+      };
+    });
+
+    res.status(200).json(formatted);
+  } catch (err) {
+    console.error('Error retrieving MedicationOccurrences:', err);
+    res.status(500).json({ message: 'Failed to retrieve medication occurrences' });
+  }
+}
+
 
 module.exports = {
   getFilteredMedications,
@@ -202,5 +231,6 @@ module.exports = {
   getAllMedicationByDate, 
   deleteMedicationById,
   addMedication,
-  updateMedicationController
+  updateMedicationController,
+  getMedicationOccurrencesController
 };

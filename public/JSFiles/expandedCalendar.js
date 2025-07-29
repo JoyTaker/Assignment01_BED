@@ -49,6 +49,25 @@ function indexToTimeString(index) {
 }
 
 
+// Redirect to another page when clicked on the play-ringtone
+document.getElementById("play-ringtone").addEventListener("click", function(){
+   window.location.href = "../HTML files/ringtoneSelection.html";
+});
+
+
+function formatTo12HourTimeLocal(isoTimeString) {
+  const date = new Date(isoTimeString); // Uses local timezone by default
+  let hours = date.getHours();
+  const minutes = date.getMinutes();
+
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+  const minutesStr = minutes.toString().padStart(2, '0');
+
+  return `${hours}:${minutesStr} ${ampm}`;
+}
+
+
 async function fetchMedications() {
   const date = document.getElementById("date").value;
   if (!date) {
@@ -70,11 +89,154 @@ async function fetchMedications() {
     console.log(response);
     const medications = await response.json();
 
-    displayMedications(medications); // if medication is fine calls display medication
+    const occurenceResponse = await fetch("http://localhost:3000/medication-occurrences");
+    
+    if (!occurenceResponse.ok) {
+      throw new Error('Network response was not ok in expandedCalendar.js');
+    }
+    
+    const medicationOccurrence = await occurenceResponse.json();
+
+    displayMedications(medications, medicationOccurrence); // if medication is fine calls display medication
 
   } catch (error) { 
     console.error("Error fetching medications:", error);
   }
+}
+
+// Redirect to another page when clicked on the play-ringtone
+document.getElementById("play-ringtone").addEventListener("click", function(){
+   window.location.href = "../HTML files/ringtoneSelection.html";
+});
+
+
+
+function displayMedications(medications, medicationOccurrences) {
+  console.log("📦 Medications:", medications);
+  console.log("📦 Occurrences:", medicationOccurrences);
+
+  const selectedDate = document.getElementById("date").value;
+  if (!selectedDate) {
+    console.warn("No date selected");
+    return;
+  }
+
+  const selectedDateStr = new Date(selectedDate).toISOString().split("T")[0];
+  const scheduleDiv = document.querySelector(".schedule");
+
+  // Reset section
+  scheduleDiv.innerHTML = `
+    <div class="select-all">
+      <input type="checkbox" id="selectAll" onclick="toggleAll()">
+      <label for="selectAll">Select all</label>
+    </div>
+  `;
+
+  const medicationMap = {};
+
+  // ✅ Step 1: Load medications for the selected date
+  medications.forEach(med => {
+    if (!med.start_hour || !med.schedule_date) return;
+
+    const medDateStr = new Date(med.schedule_date).toISOString().split("T")[0];
+    if (medDateStr !== selectedDateStr) return;
+
+    try {
+      const time = new Date(med.start_hour);
+      if (isNaN(time.getTime())) throw new Error("Invalid time");
+
+      const hourKey = time.getHours();
+
+      if (!medicationMap[hourKey]) medicationMap[hourKey] = [];
+
+      medicationMap[hourKey].push({
+        id: med.id,
+        name: med.name,
+        start: time.toISOString(),
+        source: "base"
+      });
+    } catch (err) {
+      console.warn("Invalid start_hour:", med.start_hour, med);
+    }
+  });
+
+  // ✅ Step 2: Load occurrences for the selected date using schedule_hour
+  medicationOccurrences.forEach(occ => {
+    const occDateStr = new Date(occ.schedule_date).toISOString().split("T")[0];
+    if (occDateStr !== selectedDateStr) return;
+
+    const hourKey = parseInt(occ.schedule_hour);
+    if (isNaN(hourKey)) {
+      console.warn("Invalid schedule_hour:", occ.schedule_hour, occ);
+      return;
+    }
+
+    // Construct datetime for display label
+    const paddedHour = hourKey.toString().padStart(2, "0");
+    const displayTime = `${occDateStr}T${paddedHour}:00:00`;
+
+    if (!medicationMap[hourKey]) medicationMap[hourKey] = [];
+
+    medicationMap[hourKey].push({
+      id: occ.medication_id,
+      name: occ.name,
+      start: displayTime,
+      source: "occurrence"
+    });
+  });
+
+  // ✅ Step 3: Render from start to end hour
+  for (let i = startTimeIndex; i <= endTimeIndex; i++) {
+    const hourLabel = times[i];
+    const medsAtHour = medicationMap[i];
+
+    const entry = document.createElement("div");
+    entry.className = "time-entry";
+
+    if (medsAtHour && medsAtHour.length > 0) {
+      entry.innerHTML = `<span>${hourLabel}</span>`;
+      const medGroup = document.createElement("div");
+      medGroup.className = "medication-group";
+
+      medsAtHour.forEach(med => {
+        const medBox = document.createElement("div");
+        medBox.className = "med-box";
+
+        const timeLabel = formatTo12HourTimeLocal(med.start);
+        const tag = med.source === "occurrence" ? "🔁" : "🕒";
+
+        medBox.innerHTML = `
+          <input type="text" value="${tag} ${med.name} (${timeLabel})" disabled>
+          <input type="checkbox" class="calendar-checkbox" data-medication-id="${med.id}">
+        `;
+
+        medGroup.appendChild(medBox);
+      });
+
+      entry.appendChild(medGroup);
+    } else {
+      entry.innerHTML = `
+        <span>${hourLabel}</span>
+        <input type="text" value="" disabled>
+      `;
+    }
+
+    scheduleDiv.appendChild(entry);
+  }
+}
+
+
+
+function formatTo12HourTimeLocal(isoTimeString) {
+  const date = new Date(isoTimeString); // Uses local timezone by default
+  let hours = date.getHours();
+  const minutes = date.getMinutes();
+
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+  const minutesStr = minutes.toString().padStart(2, '0');
+
+  return `${hours}:${minutesStr} ${ampm}`;
 }
 
 // Redirect to another page when clicked on the play-ringtone
@@ -95,82 +257,6 @@ function formatTo12HourTimeLocal(isoTimeString) {
   return `${hours}:${minutesStr} ${ampm}`;
 }
 
-
-
-function displayMedications(medications) {
-  console.log("Displaying medications:", medications);
-
-  const scheduleDiv = document.querySelector(".schedule");
-
-  // Reset with the Select All section
-  scheduleDiv.innerHTML = `
-    <div class="select-all">
-      <input type="checkbox" id="selectAll" onclick="toggleAll()">
-      <label for="selectAll">Select all</label>
-    </div>
-  `;
-
- const medicationMap = {};
-  medications.forEach(med => {
-    if (!med.start_hour) return;
-
-    const baseDate = new Date(med.start_hour); // changes start hour to calculatable time 02:00:00.0000000 ISO format
-    
-    for (let i = 0; i <= med.repeat_times; ++i) {
-      const newDate = new Date(baseDate.getTime() + i * med.repeat_duration * 60 * 60 * 1000); 
-      // getTime() converts all to milliseconds, then Date converts back to 02:00:00.0000000 ISO format
-
-      const hourKey = newDate.getHours(); // converted back to the original time for the key of the map
-      const formattedTime = newDate.toISOString(); // full ISO string like "1970-01-01T10:00:00.000Z"
-
-      if (!medicationMap[hourKey]) {
-        medicationMap[hourKey] = [];
-      }
-
-      medicationMap[hourKey].push({
-        id: med.id,
-        name: med.name,
-        start: formattedTime // Needs to be the formatted time and then converted by the formatTo12HourTimeLocal 
-      });                    // function to get accurate output like 10:03am output
-    }
-  });
-
-  for (let i = startTimeIndex; i <= endTimeIndex; i++) {
-    const hourLabel = times[i];
-    const medsAtHour = medicationMap[i]; 
-
-    const entry = document.createElement("div");
-    entry.className = "time-entry";
-
-    if (medsAtHour && medsAtHour.length > 0) {
-      entry.innerHTML = `<span>${hourLabel}</span>`;
-
-    const medGroup = document.createElement("div");
-    medGroup.className = "medication-group";
-
-    medsAtHour.forEach(med => {
-      const medBox = document.createElement("div");
-      medBox.className = "med-box";
-      medBox.innerHTML = `
-        <input type="text" value="${med.name} (${formatTo12HourTimeLocal(med.start)})" disabled>
-        <input type="checkbox" class="calendar-checkbox" data-medication-id="${med.id}">
-      `;
-      medGroup.appendChild(medBox);
-    });
-
-    entry.appendChild(medGroup);
-
-    } else {
-      // Just show the time label, leave blank
-      entry.innerHTML = `
-        <span>${hourLabel}</span>
-        <input type="text" value="" disabled>
-      `;
-    }
-
-  scheduleDiv.appendChild(entry);
-}
-}
 
 // Detect if the dynamic checkbox is selected
 document.addEventListener("change", function(event) {

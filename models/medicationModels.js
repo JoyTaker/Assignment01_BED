@@ -60,7 +60,13 @@ async function deleteMedicationById(id) {
     if (isNaN(medication_id)) {
       throw new Error("Invalid medication ID");
     }
+    
+    // Delete medication occurrences
+    await pool.request() 
+      .input('medication_id', sql.Int, medication_id)
+      .query(`DELETE FROM MedicationOccurrences WHERE medication_id = @medication_id`)
 
+    // Delete notes by medication_id
     await pool.request()
       .input('medication_id', sql.Int, medication_id)
       .query(`DELETE FROM MedicationNotes WHERE medication_id = @medication_id`);
@@ -84,6 +90,7 @@ async function addMedication(medicationData) {
   const pool = await sql.connect(dbConfig);
 
   try {
+    // Insert medication and return the inserted ID
     const result = await pool.request()
       .input('name', sql.VarChar(255), medicationData.name)
       .input('schedule_date', sql.Date, medicationData.schedule_date)
@@ -99,17 +106,57 @@ async function addMedication(medicationData) {
           name, schedule_date, frequency_type, repeat_times,
           repeat_duration, start_hour, end_hour, is_deleted, schedule_hour
         )
+        OUTPUT INSERTED.id 
         VALUES (
           @name, @schedule_date, @frequency_type, @repeat_times,
           @repeat_duration, @start_hour, @end_hour, @is_deleted, @schedule_hour
         )
       `);
 
-    if (result.rowsAffected[0] > 0) {
-      return { success: true, message: "Medication added successfully" };
-    } else {
-      return { success: false, message: "No medication was added" };
-    }
+    const medicationId = result.recordset[0].id;
+
+    const [startHour, startMinute, startSecond = 0] = medicationData.start_hour.split(":").map(Number);
+const timeObj = new Date(1970, 0, 1, startHour, startMinute, startSecond);
+
+// Helper: convert time to proper JS Date (for MSSQL TIME input)
+function toSqlTimeFromDate(d) {
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const s = d.getSeconds();
+  const ms = d.getMilliseconds();
+  return new Date(1970, 0, 1, h, m, s, ms); // Valid for sql.Time
+} 
+
+for (let i = 0; i < medicationData.repeat_times; ++i) {
+  // Add duration (in hours)
+  timeObj.setHours(timeObj.getHours() + medicationData.repeat_duration);
+
+  // Validate time after addition
+  if (isNaN(timeObj.getTime())) {
+    console.error("⛔ Invalid time object:", timeObj);
+    continue;
+  }
+
+  const sqlTime = toSqlTimeFromDate(timeObj); // Valid JS Date for sql.Time
+
+  console.log("🔁 Occurrence time (valid):", sqlTime.toTimeString().split(" ")[0]);
+
+  await pool.request()
+    .input('name', sql.VarChar(255), medicationData.name)
+    .input('medication_id', sql.Int, medicationId)
+    .input('schedule_date', sql.Date, medicationData.schedule_date)
+    .input('occurrence_time', sql.Time, sqlTime)
+    .input('schedule_hour', sql.Int, timeObj.getHours())
+    .input('audio_link', sql.NVarChar(255), null)
+    .query(`
+      INSERT INTO MedicationOccurrences (name, medication_id, schedule_date, occurrence_time, schedule_hour, audio_link)
+      VALUES (@name, @medication_id, @schedule_date, @occurrence_time, @schedule_hour, @audio_link)
+    `);
+}
+
+
+
+    return { success: true, message: "Medication + occurrences inserted" };
 
   } catch (err) {
     console.error("Error adding medication:", err);
@@ -120,7 +167,6 @@ async function addMedication(medicationData) {
 
 async function updateMedication(id, medicationData) {
   const pool = await sql.connect(dbConfig);
-
 
   try {
     const result = await pool.request()
@@ -155,6 +201,24 @@ async function updateMedication(id, medicationData) {
   }
 }
 
+async function getAllMedicationOccurrences() {
+  const pool = await sql.connect(dbConfig);
+  const result = await pool.request().query(`
+    SELECT 
+      mo.medication_id,
+      mo.schedule_date,
+      mo.occurrence_time,
+      mo.audio_link,
+      mo.name,
+      mo.schedule_hour,
+      m.name AS medication_name
+    FROM MedicationOccurrences mo
+    JOIN Medications m ON mo.medication_id = m.id
+    ORDER BY mo.schedule_date, mo.occurrence_time
+  `);
+  return result.recordset;
+}
+
 
 
 module.exports = {
@@ -163,5 +227,6 @@ module.exports = {
   getAllMedicationsByDate, 
   deleteMedicationById,
   addMedication, 
-  updateMedication
+  updateMedication,
+  getAllMedicationOccurrences
 };
