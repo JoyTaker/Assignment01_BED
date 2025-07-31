@@ -20,12 +20,11 @@
 
 </head>
 
-<body style="background-color: #43968e;">
+<body>
     
     <div class="container">
         <header>
             <div class="company-name-logo">
-                <img src="../Images/logo.png" alt="Company Logo" class="logo">
                 <h1 class="kumar-one-regular">Moke Medical</h1>
             </div>
 
@@ -84,7 +83,13 @@
         </main>
     </div>
 </body>
-
+<script>
+  // This should run before manageRingtone.js
+  const today = new Date();
+  const yyyyMMdd = today.toISOString().split("T")[0];
+  localStorage.setItem("selectedDate", yyyyMMdd);
+</script>
+<script src="../JSFiles/manageRingtone.js"></script>
 <script src=../JSFiles/expandedCalendar.js></script>
 <script src="../JSFiles/manageRingtone.js"></script>
 </html>

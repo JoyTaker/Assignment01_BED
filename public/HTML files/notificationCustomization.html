@@ -137,6 +137,13 @@
                     </div> -->
             </form>
         </main> 
+        <script>
+  // This should run before manageRingtone.js
+  const today = new Date();
+  const yyyyMMdd = today.toISOString().split("T")[0];
+  localStorage.setItem("selectedDate", yyyyMMdd);
+</script>
+<script src="../JSFiles/manageRingtone.js"></script>
         <script src="../JSFiles/notificationCustomization.js"></script>
         <script src="../JSFiles/manageRingtone.js"></script>
     </body>

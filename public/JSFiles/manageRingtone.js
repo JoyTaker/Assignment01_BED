@@ -39,7 +39,8 @@ async function playRingtone() {
       if (formattedDate === medDate && currentTimeSimple === startTimeSimple) {
         const audio = new Audio(meds.audio_link);
         audio.play().catch(err => console.error("Audio play failed:", err));
-        showMedicationPopup(meds.name);
+        showMedicationPopup(meds.name, audio);
+
       }
     });
 
@@ -48,19 +49,64 @@ async function playRingtone() {
   }
 }
 
+function isTimeWithinOneMinute(timeA, timeB) {
+  const [h1, m1] = timeA.split(":").map(Number);
+  const [h2, m2] = timeB.split(":").map(Number);
+  const totalMinA = h1 * 60 + m1;
+  const totalMinB = h2 * 60 + m2;
+  return Math.abs(totalMinA - totalMinB) <= 1;
+}
+
+
+
 // Attach to DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
   playRingtone(); // run once on load
   setInterval(playRingtone, 60000); // run every 1 minute
 });
 
-function showMedicationPopup(name) {
+let currentAudio = null; // global reference
+
+function showMedicationPopup(name, audio) {
+  currentAudio = audio;
+
   const popup = document.createElement("div");
   popup.innerHTML = `
-    <div style="position: fixed; top: 20px; right: 20px; background: #f5f5f5; padding: 20px; border: 2px solid #007bff; border-radius: 10px; z-index: 9999; font-family: sans-serif;">
-      🔔 It's time to take: <strong>${name}</strong>
+    <div style="
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #f5f5f5;
+      padding: 20px;
+      border: 2px solid #007bff;
+      border-radius: 10px;
+      z-index: 9999;
+      font-family: sans-serif;
+      text-align: center;
+    ">
+      🔔 It's time to take: <strong>${name}</strong><br><br>
+      <button id="mute-btn" style="padding: 6px 12px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer;">
+        Mute
+      </button>
     </div>
   `;
   document.body.appendChild(popup);
-  setTimeout(() => popup.remove(), 8000);
+
+  const muteBtn = popup.querySelector('#mute-btn');
+  muteBtn.addEventListener('click', () => {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    }
+    popup.remove();
+  });
+
+  setTimeout(() => {
+    popup.remove();
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+    }
+  }, 10000);
 }
