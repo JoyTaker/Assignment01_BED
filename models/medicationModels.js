@@ -220,6 +220,57 @@ async function getAllMedicationOccurrences() {
 }
 
 
+async function getOccurrencesByMedIdAndDate(medication_id, selectedDate) {
+  const pool = await sql.connect(dbConfig);
+
+  const result = await pool.request()
+    .input("medication_id", sql.Int, medication_id)
+    .input("schedule_date", sql.Date, selectedDate)
+    .query(`
+      SELECT 
+        mo.id,
+        mo.medication_id,
+        mo.schedule_date,
+        mo.schedule_hour,
+        mo.occurrence_time,
+        mo.audio_link,
+        mo.name,
+        m.name AS medication_name
+      FROM MedicationOccurrences mo
+      JOIN Medications m ON mo.medication_id = m.id
+      WHERE mo.medication_id = @medication_id AND mo.schedule_date = @schedule_date
+      ORDER BY mo.schedule_hour
+    `);
+
+  return result.recordset;
+}
+
+
+async function getOccurrencesByMedicationId(medicationId) {
+  const pool = await sql.connect(dbConfig);
+
+  const result = await pool.request()
+    .input("medication_id", sql.Int, medicationId)
+    .query(`
+      SELECT 
+        mo.id,
+        mo.medication_id,
+        mo.schedule_date,
+        mo.schedule_hour,
+        mo.occurrence_time,
+        mo.audio_link,
+        mo.name,
+        m.name AS medication_name
+      FROM MedicationOccurrences mo
+      JOIN Medications m ON mo.medication_id = m.id
+      WHERE mo.medication_id = @medication_id
+      ORDER BY mo.schedule_date, mo.schedule_hour
+    `);
+
+  return result.recordset;
+}
+
+
 
 module.exports = {
   getMedicationsByDateAndTime,
@@ -228,5 +279,7 @@ module.exports = {
   deleteMedicationById,
   addMedication, 
   updateMedication,
-  getAllMedicationOccurrences
+  getAllMedicationOccurrences,
+  getOccurrencesByMedIdAndDate,
+  getOccurrencesByMedicationId
 };

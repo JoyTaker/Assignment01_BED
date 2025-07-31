@@ -198,29 +198,67 @@ medicationData.schedule_hour = parseInt(hourStr, 10);
 
 async function getMedicationOccurrencesController(req, res) {
   try {
-    const occurrences = await medicationModel.getAllMedicationOccurrences(); // uses schedule_date + schedule_hour now
+    const selectedDate = req.query.date; 
+    const occurrences = await medicationModel.getAllMedicationOccurrences();
 
     const formatted = occurrences.map(row => {
-      const dateStr = new Date(row.schedule_date).toISOString().split("T")[0]; // "YYYY-MM-DD"
-      const timeStr = row.schedule_hour; // should already be in "HH:mm:ss" or similar
+      const dateStr = new Date(row.schedule_date).toISOString().split("T")[0]; 
+      const timeStr = row.schedule_hour;
 
       const occurrence_datetime = new Date(`${dateStr}T${timeStr}`);
 
       return {
+        id: row.id, // Add this if needed
         medication_id: row.medication_id,
         name: row.name,
         audio_link: row.audio_link,
         schedule_date: row.schedule_date,
         occurrence_time: row.occurrence_time,
         schedule_hour: row.schedule_hour,
-        occurrence_datetime, // constructed full datetime
+        occurrence_datetime,
       };
     });
 
-    res.status(200).json(formatted);
+    const filtered = selectedDate
+      ? formatted.filter(entry => {
+          const entryDate = new Date(entry.schedule_date).toISOString().split("T")[0];
+          return entryDate === selectedDate;
+        })
+      : formatted;
+
+    res.status(200).json(filtered);
   } catch (err) {
     console.error('Error retrieving MedicationOccurrences:', err);
     res.status(500).json({ message: 'Failed to retrieve medication occurrences' });
+  }
+}
+
+
+async function getOccurrencesByMedIdAndDateController(req, res) {
+  const { medication_id, date } = req.query;
+
+  if (!medication_id || !date) {
+    return res.status(400).json({ message: "Missing medication_id or date" });
+  }
+
+  try {
+    const result = await medicationModel.getOccurrencesByMedIdAndDate(medication_id, date);
+    res.status(200).json(result);
+  } catch (err) {
+    console.error("Error fetching occurrences by date and ID:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+async function getOccurrencesByMedicationIdController(req, res) {
+  const medicationId = req.params.medicationId;
+
+  try {
+    const result = await medicationModel.getOccurrencesByMedicationId(medicationId);
+    res.status(200).json(result);
+  } catch (err) {
+    console.error("Error fetching occurrences by medication ID:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 }
 
@@ -232,5 +270,7 @@ module.exports = {
   deleteMedicationById,
   addMedication,
   updateMedicationController,
-  getMedicationOccurrencesController
+  getMedicationOccurrencesController,
+  getOccurrencesByMedicationIdController,
+  getOccurrencesByMedIdAndDateController
 };

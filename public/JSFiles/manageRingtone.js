@@ -37,9 +37,9 @@ async function playRingtone() {
       console.log(`Current time: ${currentTimeSimple}`);
 
       if (formattedDate === medDate && currentTimeSimple === startTimeSimple) {
-        console.log("🔊 Playing audio for medication:", meds.name);
         const audio = new Audio(meds.audio_link);
         audio.play().catch(err => console.error("Audio play failed:", err));
+        showMedicationPopup(meds.name);
       }
     });
 
@@ -53,3 +53,14 @@ document.addEventListener('DOMContentLoaded', () => {
   playRingtone(); // run once on load
   setInterval(playRingtone, 60000); // run every 1 minute
 });
+
+function showMedicationPopup(name) {
+  const popup = document.createElement("div");
+  popup.innerHTML = `
+    <div style="position: fixed; top: 20px; right: 20px; background: #f5f5f5; padding: 20px; border: 2px solid #007bff; border-radius: 10px; z-index: 9999; font-family: sans-serif;">
+      🔔 It's time to take: <strong>${name}</strong>
+    </div>
+  `;
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 8000);
+}
