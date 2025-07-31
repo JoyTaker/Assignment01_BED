@@ -222,6 +222,13 @@ async function addMedicationContainer() {
       });
     }
 
+    document.querySelectorAll('.edit-box-container').forEach(editBox => {
+    editBox.style.display = 'none';
+    document.querySelectorAll('.saved-notification-container').forEach(container => {
+        container.style.display = 'flex';
+    });
+    });
+
     // Toggle show/hide
     addBoxContainer.style.display = (addBoxContainer.style.display === 'none') ? 'flex' : 'none';
   });
@@ -507,56 +514,65 @@ async function ModifyMedicationContainer() {
             parentContainer.appendChild(editBoxContainer);
 
             // Edit button click
-            editButton.addEventListener('click', () => {
-                document.querySelectorAll(".saved-notification-container").forEach(container => {
-                    if (container !== mainDiv) {
-                        container.style.display = 'none';
-                    }
-                });
-                if (editBoxContainer.style.display == 'none') { // If edit container is not open make it open
-                    editBoxContainer.style.display = 'flex';
-                } else if (editBoxContainer.style.display == 'flex') { // If edit container is close open it again
-                    editBoxContainer.style.display = 'none';
-                    document.querySelectorAll(".saved-notification-container").forEach(container => { 
-                    container.style.display = 'flex';
-                });
-                }
+           editButton.addEventListener('click', () => {
+  // Hide other saved containers
+  document.querySelectorAll(".saved-notification-container").forEach(container => {
+    if (container !== mainDiv) {
+      container.style.display = 'none';
+    }
+  });
 
+  // Hide add container if it's open
+  const openAddBox = document.querySelector('.add-box-container');
+  if (openAddBox && openAddBox.style.display !== 'none') {
+    openAddBox.style.display = 'none';
+  }
+
+  // Toggle edit box
+  if (editBoxContainer.style.display == 'none') {
+    editBoxContainer.style.display = 'flex';
+  } else {
+    editBoxContainer.style.display = 'none';
+    document.querySelectorAll(".saved-notification-container").forEach(container => {
+      container.style.display = 'flex';
+    });
+  }
+});
+
+
+        // Close button click
+        const closeBtn = editBoxContainer.querySelector('.close-edit-window');
+        closeBtn.addEventListener('click', () => {
+            editBoxContainer.style.display = 'none';
+            document.querySelectorAll(".saved-notification-container").forEach(container => {
+                container.style.display = 'flex';
             });
+        });
 
-            // Close button click
-            const closeBtn = editBoxContainer.querySelector('.close-edit-window');
-            closeBtn.addEventListener('click', () => {
-                editBoxContainer.style.display = 'none';
-                document.querySelectorAll(".saved-notification-container").forEach(container => {
-                    container.style.display = 'flex';
-                });
-            });
+        // Submit for edit container click 
 
-            // Submit for edit container click 
+        editBoxContainer.querySelector('.submit-edit-info').addEventListener('click', async function(event) {
+        event.preventDefault();
 
-            editBoxContainer.querySelector('.submit-edit-info').addEventListener('click', async function(event) {
-            event.preventDefault();
+        // Use editBoxContainer.querySelector to get the correct input values
+        const item = editBoxContainer.querySelector('.to-do-item').value;
+        const day_on_repeat = parseInt(editBoxContainer.querySelector('.every-hour-item').value, 10);
+        const duration_of_reminder = parseInt(editBoxContainer.querySelector('.frequency-item').value, 10);
+        const startHour = editBoxContainer.querySelector('.first-hour-range').value;
+        const endHour = editBoxContainer.querySelector('.second-hour-range').value;
+        const repeatSelect = editBoxContainer.querySelector('select').value;
+        const scheduleHour = parseInt(startHour.split(':')[0], 10);
 
-            // Use editBoxContainer.querySelector to get the correct input values
-            const item = editBoxContainer.querySelector('.to-do-item').value;
-            const day_on_repeat = parseInt(editBoxContainer.querySelector('.every-hour-item').value, 10);
-            const duration_of_reminder = parseInt(editBoxContainer.querySelector('.frequency-item').value, 10);
-            const startHour = editBoxContainer.querySelector('.first-hour-range').value;
-            const endHour = editBoxContainer.querySelector('.second-hour-range').value;
-            const repeatSelect = editBoxContainer.querySelector('select').value;
-            const scheduleHour = parseInt(startHour.split(':')[0], 10);
-
-            const medicationData = {
-                name: item,
-                repeat_times: day_on_repeat,
-                repeat_duration: duration_of_reminder,
-                start_hour: startHour,
-                end_hour: endHour,
-                frequency_type: repeatSelect,
-                schedule_date: savedDate,
-                schedule_hour: scheduleHour 
-            };
+        const medicationData = {
+            name: item,
+            repeat_times: day_on_repeat,
+            repeat_duration: duration_of_reminder,
+            start_hour: startHour,
+            end_hour: endHour,
+            frequency_type: repeatSelect,
+            schedule_date: savedDate,
+            schedule_hour: scheduleHour 
+        };
 
     if (!validateMedicationInput(medicationData) || !validateDurationAndRepeat(medicationData)) return;
 

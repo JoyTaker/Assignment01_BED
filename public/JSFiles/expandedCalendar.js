@@ -165,22 +165,17 @@ function displayMedications(medications, medicationOccurrences) {
     const occDateStr = new Date(occ.schedule_date).toISOString().split("T")[0];
     if (occDateStr !== selectedDateStr) return;
 
-    const hourKey = parseInt(occ.schedule_hour);
-    if (isNaN(hourKey)) {
-      console.warn("Invalid schedule_hour:", occ.schedule_hour, occ);
-      return;
-    }
+    const time = new Date(occ.occurrence_time);
+      if (isNaN(time.getTime())) throw new Error("Invalid time");
 
-    // Construct datetime for display label
-    const paddedHour = hourKey.toString().padStart(2, "0");
-    const displayTime = `${occDateStr}T${paddedHour}:00:00`;
+      const hourKey = time.getHours();
 
-    if (!medicationMap[hourKey]) medicationMap[hourKey] = [];
+      if (!medicationMap[hourKey]) medicationMap[hourKey] = [];
 
     medicationMap[hourKey].push({
       id: occ.medication_id,
       name: occ.name,
-      start: displayTime,
+      start: time.toISOString(),
       source: "occurrence"
     });
   });
@@ -224,7 +219,6 @@ function displayMedications(medications, medicationOccurrences) {
     scheduleDiv.appendChild(entry);
   }
 }
-
 
 
 function formatTo12HourTimeLocal(isoTimeString) {
@@ -301,6 +295,5 @@ document.getElementById("notification-page").addEventListener("click", function 
     window.location.href = "../HTML files/notificationCustomization.html";
   
 });
-
 
 document.getElementById("date").addEventListener("change", fetchMedications);
