@@ -19,6 +19,7 @@ const {
 
 const notificationController = require("./controllers/medicationNoteController");
 const ringtoneController = require("./controllers/ringtoneController");
+const { deleteOccurrencesByMedicationId } = require('./models/medicationModels');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -51,6 +52,9 @@ app.put('/medication-occurrences/:id/ringtone', ringtoneController.postRingtoneO
 app.get('/medication-occurrences', getMedicationOccurrencesController);
 app.get('/medication-occurrences-by-date', getOccurrencesByMedIdAndDateController);
 app.get('/medication-occurrences/by-medication/:medicationId', getOccurrencesByMedicationIdController);
+
+// Delete occurrence and edit occurrence
+app.delete("/medication-occurrences/:medicationId", deleteOccurrencesByMedicationId);
 
 
 app.listen(port, () => {

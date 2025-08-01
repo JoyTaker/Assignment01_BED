@@ -165,10 +165,25 @@ for (let i = 0; i < medicationData.repeat_times; ++i) {
 }
 
 
+
+function toSqlTime(timeStr) {
+  const [hour, minute, second = 0] = timeStr.split(":").map(Number);
+  return new Date(1970, 0, 1, hour, minute, second);
+}
+
+function toSqlTimeFromDate(d) {
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const s = d.getSeconds();
+  const ms = d.getMilliseconds();
+  return new Date(1970, 0, 1, h, m, s, ms);
+}
+
 async function updateMedication(id, medicationData) {
   const pool = await sql.connect(dbConfig);
 
   try {
+    // 1. Update Medication record
     const result = await pool.request()
       .input('id', sql.Int, id)
       .input('name', sql.VarChar(255), medicationData.name)
@@ -178,6 +193,7 @@ async function updateMedication(id, medicationData) {
       .input('repeat_duration', sql.Int, medicationData.repeat_duration)
       .input('start_hour', sql.Time, toSqlTime(medicationData.start_hour))
       .input('end_hour', sql.Time, toSqlTime(medicationData.end_hour))
+      .input('schedule_hour', sql.Int, parseInt(medicationData.start_hour.split(":")[0], 10))
       .query(`
         UPDATE Medications SET
           name = @name,
@@ -187,19 +203,50 @@ async function updateMedication(id, medicationData) {
           repeat_duration = @repeat_duration,
           start_hour = @start_hour,
           end_hour = @end_hour,
+          schedule_hour = @schedule_hour
         WHERE id = @id
       `);
 
-    if (result.rowsAffected[0] > 0) {
-      return { success: true };
-    } else {
+    if (result.rowsAffected[0] === 0) {
       return { success: false, message: "No medication updated" };
     }
+
+    // 2. Delete old occurrences
+    await pool.request()
+      .input('medication_id', sql.Int, id)
+      .query("DELETE FROM MedicationOccurrences WHERE medication_id = @medication_id");
+
+    // 3. Recreate occurrences based on new values
+    const [startHour, startMinute, startSecond = 0] = medicationData.start_hour.split(":").map(Number);
+    const timeObj = new Date(1970, 0, 1, startHour, startMinute, startSecond);
+
+    for (let i = 0; i < medicationData.repeat_times; ++i) {
+      timeObj.setHours(timeObj.getHours() + medicationData.repeat_duration);
+
+      const sqlTime = toSqlTimeFromDate(timeObj);
+
+      await pool.request()
+        .input('name', sql.VarChar(255), medicationData.name)
+        .input('medication_id', sql.Int, id)
+        .input('schedule_date', sql.Date, medicationData.schedule_date)
+        .input('occurrence_time', sql.Time, sqlTime)
+        .input('schedule_hour', sql.Int, timeObj.getHours())
+        .input('audio_link', sql.NVarChar(255), null)
+        .query(`
+          INSERT INTO MedicationOccurrences (name, medication_id, schedule_date, occurrence_time, schedule_hour, audio_link)
+          VALUES (@name, @medication_id, @schedule_date, @occurrence_time, @schedule_hour, @audio_link)
+        `);
+    }
+
+    return { success: true, message: "Medication and occurrences updated." };
+
   } catch (err) {
-    console.error("Error updating medication:", err);
-    return { success: false, message: "Error updating medication" };
+    console.error("❌ Error updating medication:", err);
+    return { success: false, message: "Error during update" };
   }
 }
+
+
 
 async function getAllMedicationOccurrences() {
   const pool = await sql.connect(dbConfig);
@@ -270,6 +317,23 @@ async function getOccurrencesByMedicationId(medicationId) {
   return result.recordset;
 }
 
+async function deleteOccurrencesByMedicationId(medicationId) {
+  const pool = await sql.connect(dbConfig);
+
+  try {
+    await pool.request()
+      .input("medication_id", sql.Int, medicationId)
+      .query(`
+        DELETE FROM MedicationOccurrences
+        WHERE medication_id = @medication_id
+      `);
+
+    return { success: true };
+  } catch (err) {
+    console.error("Failed to delete occurrences:", err);
+    return { success: false, message: "Error deleting occurrences" };
+  }
+}
 
 
 module.exports = {
@@ -281,5 +345,6 @@ module.exports = {
   updateMedication,
   getAllMedicationOccurrences,
   getOccurrencesByMedIdAndDate,
-  getOccurrencesByMedicationId
+  getOccurrencesByMedicationId,
+  deleteOccurrencesByMedicationId
 };

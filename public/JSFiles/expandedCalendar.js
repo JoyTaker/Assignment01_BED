@@ -289,6 +289,8 @@ document.getElementById("notification-page").addEventListener("click", function 
   const selectedDate = document.getElementById("date").value;
   if (!selectedDate) {
       localStorage.removeItem("selectedDate"); // overwrite local storage when no date is selected
+  } else {
+    localStorage.setItem("selectedDate", selectedDate);
   }
 
   localStorage.setItem("selectedDate", selectedDate); // Store in localStorage

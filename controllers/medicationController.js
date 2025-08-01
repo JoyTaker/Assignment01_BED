@@ -145,50 +145,59 @@ async function updateMedicationController(req, res) {
   const medicationId = req.params.id;
   const medicationData = req.body;
 
-  const {
-    name,
-    schedule_date,
-    frequency_type,
-    repeat_times,
-    repeat_duration,
-    start_hour,
-    end_hour,
-  } = medicationData;
-
-  // Validate required fields
-  if (
-    !name ||
-    !schedule_date ||
-    !frequency_type ||
-    repeat_times === undefined ||  
-    start_hour === undefined ||
-    end_hour === undefined
-  ) {
-    return res.status(400).json({ message: "Missing required fields" });
-  }
-
-medicationData.repeat_times = parseInt(repeat_times, 10);
-
-if (repeat_duration !== undefined && repeat_duration !== "") {
-  medicationData.repeat_duration = parseInt(repeat_duration, 10);
-} else {
-  medicationData.repeat_duration = 0; 
-}
-
-medicationData.start_hour = start_hour;
-medicationData.end_hour = end_hour;
-
-const [hourStr] = start_hour.split(':');
-medicationData.schedule_hour = parseInt(hourStr, 10);
-
   try {
-    const result = await medicationModel.updateMedication(medicationId, medicationData);
+    // Destructure and validate required fields
+    const {
+      name,
+      schedule_date,
+      frequency_type,
+      repeat_times,
+      repeat_duration,
+      start_hour,
+      end_hour
+    } = medicationData;
+
+    if (
+      !name ||
+      !schedule_date ||
+      !frequency_type ||
+      repeat_times === undefined ||
+      start_hour === undefined ||
+      end_hour === undefined
+    ) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // Parse and sanitize input
+    const parsedRepeatTimes = parseInt(repeat_times, 10);
+    const parsedRepeatDuration = repeat_duration !== undefined && repeat_duration !== ""
+      ? parseInt(repeat_duration, 10)
+      : 0;
+
+    const parsedStartHour = start_hour;
+    const parsedEndHour = end_hour;
+    const parsedScheduleHour = parseInt(parsedStartHour.split(":")[0], 10);
+
+    const cleanData = {
+      name,
+      schedule_date,
+      frequency_type,
+      repeat_times: parsedRepeatTimes,
+      repeat_duration: parsedRepeatDuration,
+      start_hour: parsedStartHour,
+      end_hour: parsedEndHour,
+      schedule_hour: parsedScheduleHour
+    };
+
+    // Call model update
+    const result = await medicationModel.updateMedication(medicationId, cleanData);
 
     if (result.success) {
       return res.status(200).json({ message: "Medication updated successfully" });
     } else {
       return res.status(400).json({ message: result.message });
     }
+
   } catch (err) {
     console.error("Error updating medication:", err);
     return res.status(500).json({ message: "Server error" });
@@ -262,6 +271,27 @@ async function getOccurrencesByMedicationIdController(req, res) {
   }
 }
 
+async function deleteOccurrencesController(req, res) {
+  const medicationId = req.params.medicationId;
+
+  if (!medicationId) {
+    return res.status(400).json({ message: "Missing medicationId in URL." });
+  }
+
+  try {
+    const result = await deleteOccurrencesByMedicationId(parseInt(medicationId));
+
+    if (result.success) {
+      return res.status(200).json({ message: "Occurrences deleted successfully." });
+    } else {
+      return res.status(500).json({ message: result.message });
+    }
+  } catch (err) {
+    console.error("❌ Controller error:", err);
+    return res.status(500).json({ message: "Server error while deleting occurrences." });
+  }
+}
+
 
 module.exports = {
   getFilteredMedications,
@@ -272,5 +302,6 @@ module.exports = {
   updateMedicationController,
   getMedicationOccurrencesController,
   getOccurrencesByMedicationIdController,
-  getOccurrencesByMedIdAndDateController
+  getOccurrencesByMedIdAndDateController,
+  deleteOccurrencesController
 };

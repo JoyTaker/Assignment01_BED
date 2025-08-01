@@ -591,6 +591,10 @@ async function ModifyMedicationContainer() {
             console.log(medicationData['name']);
             
             ModifyMedicationContainer(); // Refresh list
+
+               if (typeof fetchMedications === 'function') {
+                    fetchMedications();
+               }
             alert("Medication updated successfully!");
         } else {
             alert(result.message || "Failed to edit medication.");
@@ -695,6 +699,36 @@ async function deleteSpecificNoteById(medId, noteText, noteDiv, deleteButton) {
         console.error("Delete error:", err);
         alert("Server error");
     }
+}
+
+async function fetchMedications() {
+  const dateInput = document.getElementById("date");
+  if (!dateInput || !dateInput.value) {
+    console.warn("No date selected in calendar input");
+    return;
+  }
+
+  const selectedDate = dateInput.value;
+
+  try {
+    // 1. Fetch medications by date
+    const medRes = await fetch(`http://localhost:3000/medications?date=${selectedDate}`);
+    if (!medRes.ok) throw new Error("Failed to fetch medications");
+
+    const medications = await medRes.json();
+
+    // 2. Fetch all occurrences
+    const occRes = await fetch(`http://localhost:3000/medication-occurrences`);
+    if (!occRes.ok) throw new Error("Failed to fetch occurrences");
+
+    const medicationOccurrences = await occRes.json();
+
+    // 3. Display medications
+    displayMedications(medications, medicationOccurrences);
+
+  } catch (err) {
+    console.error("Error in fetchMedications:", err);
+  }
 }
 
 

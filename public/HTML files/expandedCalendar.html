@@ -20,12 +20,13 @@
 
 </head>
 
-<body>
+<body style="background-color: grey;">
     
     <div class="container">
         <header>
             <div class="company-name-logo">
-                <h1 class="kumar-one-regular">Moke Medical</h1>
+                <div class="moke-medical kumar-one-regular">Moke Medical</div>
+                <div class="subtitle">Hello</div>
             </div>
 
         </header>
@@ -65,13 +66,12 @@
                 </div>
 
                 <div class="alert-ringtone">
-                    <div>Alert ringtone</div>
-                    <button type="button" id="play-ringtone">Add ringtone</button>
+                    <div class="alert-ringtone-text inter">Alert ringtone</div>
+                    <button type="button" id="play-ringtone" class="play-ringtone inter">Add ringtone</button>
                 </div>
 
-                <button type="button" class="notification" id="notification-page"> Notification customization</button>
+                <button type="button" class="notification inter" id="notification-page"> Notification customization</button>
 
-                <button class="mute">Mute selected</button>
 
                 <div class="navbar">
                     <button class="home"><a href="../HTML files/home.html">Home</a></button>
@@ -83,13 +83,7 @@
         </main>
     </div>
 </body>
-<script>
-  // This should run before manageRingtone.js
-  const today = new Date();
-  const yyyyMMdd = today.toISOString().split("T")[0];
-  localStorage.setItem("selectedDate", yyyyMMdd);
-</script>
+
 <script src="../JSFiles/manageRingtone.js"></script>
 <script src=../JSFiles/expandedCalendar.js></script>
-<script src="../JSFiles/manageRingtone.js"></script>
 </html>

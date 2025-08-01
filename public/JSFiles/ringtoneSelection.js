@@ -34,10 +34,10 @@ function audioTrackSelections() {
       item.innerHTML = `
         <h4>${track.name}</h4>
         <audio controls>
-          <source src="${track.url}" type="audio/mpeg" />
+          <source src="${track.url}" type="audio/mpeg"/>
           Your browser does not support the audio element.
         </audio>
-        <button type="button" class="select-ringtone" id="select-ringtone">Select this ringtone</button>
+        <button type="button" class="select-ringtone inter" id="select-ringtone">Select this ringtone</button>
       `;
 
       const selectRingtoneButton = item.querySelector('.select-ringtone');
